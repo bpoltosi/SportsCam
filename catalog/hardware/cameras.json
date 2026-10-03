@@ -1,12 +1,21 @@
 {
   "schema_version": "0.1",
-  "catalog_version": "2026-10-03",
+  "catalog_version": "2026-10-03-br",
   "category": "camera",
   "source_policy": {
-    "primary_marketplace": "aliexpress",
+    "primary_market_sources": [
+      "KaBuM",
+      "Magazine Luiza",
+      "Mercado Livre"
+    ],
+    "manufacturer_verification": [
+      "Intelbras",
+      "TP-Link"
+    ],
     "pricing_model": "static_reference",
     "dynamic_price_tracking": false,
-    "freight_tax_exchange_calculation": false
+    "freight_tax_exchange_calculation": false,
+    "confidence_policy": "Priorizar fabricante conhecido + varejista brasileiro grande; marketplace só entra quando a oferta/vendedor e especificações puderem ser identificados."
   },
   "compatibility_contract": {
     "id": "CAMERA_BASE_V1",
@@ -29,10 +38,11 @@
   },
   "items": [
     {
-      "id": "CAM-ALX-SIP-K307G6-WIFI",
+      "id": "CAM-BR-INTELBRAS-VIPC1230B-G2",
       "category": "camera",
-      "model": "SIP-K307G6-WiFi",
-      "variant": "1080p30_wifi",
+      "manufacturer": "Intelbras",
+      "model": "VIPC 1230 B G2",
+      "variant": "1080p30_poe",
       "compatibility_status": "compatible",
       "capabilities": {
         "resolution": {
@@ -44,42 +54,37 @@
           "max": 30
         },
         "transmission": [
-          "wifi"
+          "ethernet"
         ],
-        "wifi": {
-          "standard": "802.11b/g/n"
-        },
         "ethernet": "10/100",
         "power": [
-          "dc12v"
+          "poe"
         ],
         "protocols": [
           "rtsp",
-          "onvif",
-          "http",
-          "https"
+          "onvif"
         ]
       },
-      "notes": "Módulo IP; Wi-Fi é recurso opcional do conjunto. Sem PTZ obrigatório.",
+      "notes": "Modelo encontrado em grande varejista brasileiro. Para homologação final, confirmar no SKU comprado o perfil ONVIF/RTSP e a versão de hardware.",
       "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005011830729504",
+        "source": "magazine_luiza",
         "seller": null,
-        "price": 90.32,
-        "currency": "USD",
-        "reference_date": "2026-09-08",
-        "url": "https://www.aliexpress.com/item/1005011830729504.html"
+        "price": 289.9,
+        "currency": "BRL",
+        "reference_date": "2026-10-03",
+        "url": "https://www.magazineluiza.com.br/busca/camera%2Bip%2Bintelbras%2Binfra/"
       },
       "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "SMTSEC SIP-K307G6 official specification",
+        "manufacturer": "Intelbras",
+        "retail_source": "Magazine Luiza",
         "confidence": "high"
       }
     },
     {
-      "id": "CAM-ALX-SIP-K307G6-POE",
+      "id": "CAM-BR-INTELBRAS-VIP3230D-SL-G3",
       "category": "camera",
-      "model": "SIP-K307G6",
+      "manufacturer": "Intelbras",
+      "model": "VIP 3230 D SL G3",
       "variant": "1080p30_poe",
       "compatibility_status": "compatible",
       "capabilities": {
@@ -97,207 +102,159 @@
         "ethernet": "10/100",
         "power": [
           "poe_802.3af",
-          "poe_802.3at",
           "dc12v"
         ],
         "protocols": [
           "rtsp",
+          "onvif"
+        ]
+      },
+      "notes": "Dome fixa, IP/PoE, Starlight. Armazenamento microSD existe no produto, mas não é requisito do contrato.",
+      "reference_offer": {
+        "source": "kabum",
+        "seller": "Tudo Forte",
+        "price": 735.39,
+        "currency": "BRL",
+        "reference_date": "2026-10-03",
+        "url": "https://www.kabum.com.br/produto/414169/camera-vip-3230d-sl-g3"
+      },
+      "verification": {
+        "manufacturer": "Intelbras",
+        "retail_source": "KaBuM",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-BR-INTELBRAS-VIP3230B-SL-G3",
+      "category": "camera",
+      "manufacturer": "Intelbras",
+      "model": "VIP 3230 B SL G3",
+      "variant": "1080p30_poe",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_802.3af",
+          "dc12v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif"
+        ]
+      },
+      "notes": "Bullet fixa, IP67, PoE e lente fixa 2,8 mm.",
+      "reference_offer": {
+        "source": "kabum",
+        "seller": "Tudo Forte",
+        "price": 735.39,
+        "currency": "BRL",
+        "reference_date": "2026-10-03",
+        "url": "https://www.kabum.com.br/produto/698940/camera-bullet-vip-3230-b-sl-g3-intelbras-de-2mp-com-30-metros-de-ir-e-tecnologia-starlight"
+      },
+      "verification": {
+        "manufacturer": "Intelbras",
+        "retail_source": "KaBuM",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-BR-XELPON-BXM3025-G2",
+      "category": "camera",
+      "manufacturer": "Xelpon",
+      "model": "BXM3025 G2",
+      "variant": "3mp30_poe",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 2304,
+          "height": 1296,
+          "megapixels": 3
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_802.3af",
+          "dc12v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif"
+        ]
+      },
+      "notes": "Entrega resolução superior a 1080p mantendo 30 fps. Compatível com CAMERA_BASE_V1.",
+      "reference_offer": {
+        "source": "kabum",
+        "seller": "UP DISTRIBUIDORA",
+        "price": 302.17,
+        "currency": "BRL",
+        "reference_date": "2026-10-03",
+        "url": "https://www.kabum.com.br/produto/597767/cftv-xelpon-camera-full-color-ip-bullet-bxm3025-g2"
+      },
+      "verification": {
+        "manufacturer": "Xelpon",
+        "retail_source": "KaBuM",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-BR-INTELBRAS-VIP5232-SD",
+      "category": "camera",
+      "manufacturer": "Intelbras",
+      "model": "VIP 5232 SD",
+      "variant": "1080p60_poe_plus_ptz",
+      "compatibility_status": "compatible_with_extra_capabilities",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 60
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_plus"
+        ],
+        "protocols": [
+          "rtsp",
           "onvif",
-          "http",
-          "https"
-        ]
+          "rtmp"
+        ],
+        "ptz": true
       },
-      "notes": "Mesmo módulo técnico com PoE como recurso opcional. A oferta AliExpress encontrada é uma variante com lente motorizada; confirmar SKU/PoE selecionado antes da compra.",
+      "notes": "É PTZ, portanto não representa o perfil físico preferencial do sistema. Entra no catálogo apenas porque satisfaz tecnicamente o contrato e oferece 1080p60. O Engine não deve exigir PTZ.",
       "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005012278907264",
-        "seller": null,
-        "price": 144.96,
-        "currency": "USD",
-        "reference_date": "2026-09-08",
-        "url": "https://www.aliexpress.com/item/1005012278907264.html"
+        "source": "magazine_luiza",
+        "seller": "Eletrônica Santana",
+        "price": 1083.89,
+        "currency": "BRL",
+        "reference_date": "2026-10-03",
+        "url": "https://www.magazineluiza.com.br/camera-de-seguranca-ip-vip-3230-d-fc-ia-intelbras/p/gc9g8e8880/cj/cagu/"
       },
       "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "SMTSEC SIP-K307G6 official specification",
-        "confidence": "medium"
-      }
-    },
-    {
-      "id": "CAM-ALX-WGWK-1080P60-POE",
-      "category": "camera",
-      "model": "WGWK 1080P 60FPS IP Camera Module IMX307",
-      "variant": "1080p60_poe",
-      "compatibility_status": "compatible",
-      "capabilities": {
-        "resolution": {
-          "width": 1920,
-          "height": 1080,
-          "megapixels": 2
-        },
-        "fps": {
-          "max": 60
-        },
-        "transmission": [
-          "ethernet"
-        ],
-        "ethernet": "10/100",
-        "power": [
-          "poe_48v"
-        ],
-        "protocols": [
-          "rtsp",
-          "onvif"
-        ]
-      },
-      "notes": "Módulo com sensor Sony IMX307; versão fixa 2.5 mm identificada na oferta.",
-      "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005009529796898",
-        "seller": null,
-        "price": 81.51,
-        "currency": "USD",
-        "reference_date": "2026-09-06",
-        "url": "https://www.aliexpress.com/item/1005009529796898.html"
-      },
-      "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "AliExpress product title/specification",
-        "confidence": "high"
-      }
-    },
-    {
-      "id": "CAM-ALX-WGWK-1080P60-POE-VF",
-      "category": "camera",
-      "model": "WGWK 1080P 60FPS IP Camera Module IMX307",
-      "variant": "1080p60_poe_varifocal",
-      "compatibility_status": "compatible",
-      "capabilities": {
-        "resolution": {
-          "width": 1920,
-          "height": 1080,
-          "megapixels": 2
-        },
-        "fps": {
-          "max": 60
-        },
-        "transmission": [
-          "ethernet"
-        ],
-        "ethernet": "10/100",
-        "power": [
-          "poe_48v"
-        ],
-        "protocols": [
-          "rtsp",
-          "onvif"
-        ]
-      },
-      "lens": {
-        "type": "varifocal",
-        "range_mm": "2.8-12"
-      },
-      "notes": "Variante com lente varifocal 2.8–12 mm.",
-      "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005009551491921",
-        "seller": null,
-        "price": 80.54,
-        "currency": "USD",
-        "reference_date": "2026-05-20",
-        "url": "https://www.aliexpress.com/item/1005009551491921.html"
-      },
-      "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "AliExpress product title/specification",
-        "confidence": "high"
-      }
-    },
-    {
-      "id": "CAM-ALX-HQCAM-4MP-1440P30",
-      "category": "camera",
-      "model": "HQCAM 4MP Mini IP Bullet Camera Module",
-      "variant": "2k30_network",
-      "compatibility_status": "compatible",
-      "capabilities": {
-        "resolution": {
-          "width": 2560,
-          "height": 1440,
-          "megapixels": 4
-        },
-        "fps": {
-          "max": 30
-        },
-        "transmission": [
-          "ip_network"
-        ],
-        "power": [
-          "external_dc"
-        ],
-        "protocols": [
-          "rtsp"
-        ]
-      },
-      "notes": "Oferta declara 1440p/1080p a 30 fps. A alimentação/interface exatos devem ser confirmados no SKU antes da compra.",
-      "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005005954561373",
-        "seller": "HQCAM Official Store",
-        "price": 35.01,
-        "currency": "USD",
-        "reference_date": "2026-08-27",
-        "url": "https://www.aliexpress.com/item/1005005954561373.html"
-      },
-      "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "AliExpress listing title",
-        "confidence": "medium"
-      }
-    },
-    {
-      "id": "CAM-ALX-WGWK-4K30-POE",
-      "category": "camera",
-      "model": "WGWK 4K 30FPS POE IP Camera",
-      "variant": "4k30_poe",
-      "compatibility_status": "compatible",
-      "capabilities": {
-        "resolution": {
-          "width": 3840,
-          "height": 2160,
-          "megapixels": 8
-        },
-        "fps": {
-          "max": 30
-        },
-        "transmission": [
-          "ethernet"
-        ],
-        "ethernet": "10/100",
-        "power": [
-          "poe"
-        ],
-        "protocols": [
-          "rtsp",
-          "onvif"
-        ],
-        "lens": {
-          "type": "varifocal",
-          "range_mm": "5-50"
-        }
-      },
-      "notes": "Capacidade superior ao contrato base; deve ser aceito pelo Engine para CAMERA_BASE_V1.",
-      "reference_offer": {
-        "source": "aliexpress",
-        "product_id": "1005011896614967",
-        "seller": null,
-        "price": 88.64,
-        "currency": "USD",
-        "reference_date": "2026-09-04",
-        "url": "https://www.aliexpress.com/item/1005011896614967.html"
-      },
-      "verification": {
-        "product_listing": "AliExpress listing indexed by Pricearchive",
-        "technical_source": "AliExpress listing title",
+        "manufacturer": "Intelbras",
+        "manufacturer_datasheet": "https://backend.intelbras.com/sites/default/files/2024-06/Datasheet%20%20-%20VIP%205232%20SD%20IA%20-%20V9.pdf",
+        "retail_source": "Magazine Luiza",
         "confidence": "high"
       }
     }
@@ -306,12 +263,17 @@
     {
       "variant": "2k60",
       "status": "not_verified",
-      "reason": "Não encontrei nesta rodada uma oferta AliExpress com resolução 2560x1440 ou equivalente e 60 fps, simultaneamente confirmados com RTSP/ONVIF."
+      "reason": "Nenhuma câmera fixa de grande varejista brasileiro foi encontrada nesta rodada com 2560x1440 a 60 fps e RTSP/ONVIF confirmados."
+    },
+    {
+      "variant": "1080p60_fixed",
+      "status": "not_verified",
+      "reason": "A oferta brasileira claramente confirmada em 1080p60 encontrada foi PTZ. Ainda falta uma câmera fixa 1080p60 adequada ao perfil físico preferencial."
     },
     {
       "variant": "1080p30_wifi",
-      "status": "verified_with_caveat",
-      "reason": "A base técnica SMTSEC confirma 1080p30, RTSP e Wi-Fi opcional; a oferta AliExpress encontrada é listada como SIP-K307G6-WiFi e deve ter o SKU/variante conferido antes da compra."
+      "status": "not_verified",
+      "reason": "Nesta rodada priorizamos ofertas cabeadas/PoE de grandes varejistas; não homologamos Wi-Fi sem confirmação adequada de RTSP/ONVIF."
     }
   ]
 }
