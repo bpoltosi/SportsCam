@@ -2,49 +2,59 @@
 
 ## Responsabilidade
 
-O Engine TypeScript resolve deterministicamente o projeto. O runtime Python executa a integração física e o processamento de mídia.
+O Engine TypeScript resolve deterministicamente o projeto. O runtime Python executa integração física e mídia. Nenhum driver conhece Fastify, SQLite ou o Engine.
+
+## Regra de dependências
 
 ```
-Project Definition -> TS Engine -> resolved hardware/modules
-                                      |
-                                      v
-                              Python Device Runtime
-                              |       |       |
-                            camera   I/O     NVR
-                              |
-                            FFmpeg
-                              |
-                    recording -> segments -> replay clips
+core
+  ^        ^
+  |        |
+devices  media
+   \      /
+    composition/CLI
 ```
 
-## Tipos suportados
+O núcleo define contratos/modelos. Drivers dependem do núcleo. Mídia depende do núcleo. A API não é importada pelos drivers. A montagem concreta fica na factory/CLI.
 
-| Tipo | Driver | Uso |
-|---|---|---|
-| RTSP camera | `RTSPCamera` | ingestão de vídeo |
-| ONVIF camera | `ONVIFCamera` | endpoint/discovery/control; entrega stream RTSP |
-| HTTP camera | `HTTPDevice` | APIs REST proprietárias |
-| USB/UVC camera | `UVCCamera` | captura local USB |
-| Serial | `SerialDevice` | RS-232/RS-485/controladores |
-| GPIO | `GPIODevice` | trigger, LED, relé e sinais |
-| NVR | `NVRDevice` | integração com gravador |
- 
-## Mídia
+Isso permite trocar uma câmera, NVR, biblioteca ou protocolo sem alterar o restante do sistema.
 
-`media/recorder.py` grava RTSP em segmentos rotativos. `media/ffmpeg.py` cria clipes arbitrários e divide gravações. `media/replay.py` cria um replay centrado em um evento:
+## Hot path de vídeo
 
-- evento em T;
-- N segundos antes;
-- M segundos depois;
-- exportação para arquivo;
-- manifesto JSON opcional.
+A gravação não passa frames por Python. FFmpeg recebe o RTSP diretamente e escreve segmentos no disco. Python apenas inicia, monitora e encerra o processo.
 
-O pipeline não depende do fabricante da câmera.
+Isso evita:
+- cópia de cada frame para Python;
+- uso desnecessário de CPU;
+- crescimento de memória;
+- bloqueio do processo principal.
 
-## Segurança
+Processos de longa duração usam `Popen` sem buffer de stdout/stderr em memória. Operações curtas, como gerar um clip, usam subprocesso bloqueante porque o resultado é necessário antes de continuar.
 
-Credenciais não devem ser commitadas em configurações. O runtime deve receber secrets por environment, secret store ou configuração protegida.
+## Gravação
 
-## Limite atual
+`start_rtsp_recording()` retorna imediatamente um `RecorderHandle`. O chamador pode consultar `running` e chamar `stop()`.
 
-A integração ONVIF completa (WS-Discovery + SOAP GetProfiles/GetStreamUri) e APIs proprietárias de NVR ainda precisam de adapters por fabricante. O contrato do runtime já permite essas implementações sem alterar Engine ou API.
+Segmentos são gerados pelo próprio FFmpeg com stream copy, evitando transcoding durante a gravação.
+
+## Clips e replay
+
+O clip usa stream copy por padrão. Isso é muito mais barato que recodificar. Recodificação H.264/AAC fica disponível quando necessário para compatibilidade.
+
+`create_replay_clip()` converte um timestamp de evento em uma janela:
+
+`max(0, evento - pré)` até `evento + pós`.
+
+## Otimização
+
+- FFmpeg faz ingestão, mux e segmentação;
+- Python não processa frames salvo quando uma integração UVC realmente precisa deles;
+- drivers opcionais são carregados apenas quando usados;
+- factory usa dependency injection para evitar acoplamento do core;
+- processos longos não acumulam logs na RAM;
+- clips usam stream copy por padrão;
+- validações rejeitam parâmetros inválidos antes de iniciar FFmpeg.
+
+## Próximo nível
+
+Para produção, o supervisor do runtime deverá manter uma tabela de processos por câmera, detectar exit codes, aplicar backoff exponencial em reconexões e expor métricas. Isso deve continuar fora dos drivers individuais.
