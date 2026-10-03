@@ -1,0 +1,1 @@
+"""SportsCam edge connectivity primitives."""
