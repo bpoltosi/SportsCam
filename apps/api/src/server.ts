@@ -5,6 +5,9 @@ import { resolveProject } from "../../../packages/engine/src/engine.js";
 import type { EngineCatalog, ProjectDefinition } from "../../../packages/engine/src/engine.js";
 import { openDatabase, SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository } from "../../../packages/persistence/src/index.js";
 import { AuthService } from "../../../packages/auth/src/index.js";
+import { assertRole } from "./application/authorization.js";
+import { BusinessService } from "./application/business-service.js";
+import { AppError, toAppError } from "./application/errors.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
@@ -14,6 +17,7 @@ const projectRepository = new SQLiteProjectRepository(db);
 const resolutionRepository = new SQLiteResolutionRepository(db);
 const business = new BusinessRepository(db);
 const auth = new AuthService(db);
+const businessService = new BusinessService(business);
 
 const ProjectSchema = z.object({ project: z.object({
   id: z.string().min(1), version: z.string().min(1), sport: z.string().min(1),
@@ -78,15 +82,6 @@ app.addHook("preHandler", async (request, reply) => {
   }
 });
 
-function requireRole(request: { user?: ReturnType<AuthService["authenticate"]> }, reply: { code: (status: number) => { send: (body: unknown) => unknown } }, roles: readonly string[]): boolean {
-  const role = request.user?.role;
-  if (!role || !roles.includes(role)) {
-    void reply.code(403).send({ error: "FORBIDDEN" });
-    return false;
-  }
-  return true;
-}
-
 app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.3.0" }));
 app.post("/v1/auth/register", async (request, reply) => {
   const parsed=RegisterSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_REGISTRATION",issues:parsed.error.issues});
@@ -114,14 +109,14 @@ app.post("/v1/auth/login", async (request, reply) => {
 app.get("/v1/projects", async () => projectRepository.list());
 app.get("/v1/projects/:id", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
-  const project = await projectRepository.get(id);
+  const project = await projectRepository.get(id);\n  if (project && project.organizationId && project.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   return project ? project : reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
 });
 app.post("/v1/projects", async (request, reply) => {
   const parsed = ProjectSchema.safeParse(request.body);
   if (!parsed.success) return reply.code(400).send({ error: "INVALID_PROJECT_DEFINITION", issues: parsed.error.issues });
   const timestamp = now();
-  try { return reply.code(201).send(await projectRepository.create({ id: parsed.data.project.id, name: parsed.data.project.id, definitionJson: JSON.stringify(parsed.data), createdAt: timestamp, updatedAt: timestamp })); }
+  try { return reply.code(201).send(await projectRepository.create({ id: parsed.data.project.id, name: parsed.data.project.id, organizationId: request.user!.organizationId, definitionJson: JSON.stringify(parsed.data), createdAt: timestamp, updatedAt: timestamp })); }
   catch (e) { if (e instanceof Error && e.message === "PROJECT_ALREADY_EXISTS") return reply.code(409).send({ error: e.message }); throw e; }
 });
 app.put("/v1/projects/:id", async (request, reply) => {
@@ -134,7 +129,7 @@ app.put("/v1/projects/:id", async (request, reply) => {
 });
 app.delete("/v1/projects/:id", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
-  if (!await projectRepository.get(id)) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
+  const ownedProject = await projectRepository.get(id);\n  if (!ownedProject) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });\n  if (ownedProject.organizationId && ownedProject.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   await projectRepository.delete(id); return reply.code(204).send();
 });
 app.post("/v1/engine/resolve", async (request, reply) => {
@@ -156,35 +151,35 @@ app.post("/v1/organizations", async (request, reply) => {
   const o={id:crypto.randomUUID(),...parsed.data,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createOrganization(o));
 });
 app.post("/v1/organizations/:orgId/members", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin"])) return; const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=MemberSchema.safeParse(request.body);
+  try { assertRole(request.user, ["owner","admin"]); } catch (error) { throw error; } const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=MemberSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_MEMBER",issues:parsed.error.issues});
   const m={id:crypto.randomUUID(),organizationId:orgId,...parsed.data,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createMember(m));
 });
 app.get("/v1/organizations/:orgId/members", async request => business.listMembers(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 app.post("/v1/organizations/:orgId/projects", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin","manager"])) return; const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=BusinessProjectSchema.safeParse(request.body);
+  assertRole(request.user, ["owner","admin","manager"]); const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=BusinessProjectSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_BUSINESS_PROJECT",issues:parsed.error.issues});
-  const p={id:crypto.randomUUID(),organizationId:orgId,...parsed.data,status:"draft" as const,currentConfigurationId:null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createProject(p));
+  const p={id:crypto.randomUUID(),organizationId:orgId,...parsed.data,status:"draft" as const,currentConfigurationId:null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createProject(p, request.user!.memberId));
 });
 app.get("/v1/organizations/:orgId/projects", async request => business.listProjects(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 app.get("/v1/business-projects/:projectId/configurations", async request => business.listConfigurations(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/configurations", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin","manager","operator"])) return;
+  assertRole(request.user, ["owner","admin","manager","operator"]);
   const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
   const project=business.getProject(projectId); if(!project) return reply.code(404).send({error:"BUSINESS_PROJECT_NOT_FOUND"});
   const body=ProjectSchema.safeParse(request.body); if(!body.success) return reply.code(400).send({error:"INVALID_PROJECT_DEFINITION",issues:body.error.issues});
-  const versions=business.listConfigurations(projectId); const result=resolveProject(body.data as ProjectDefinition,await loadCatalog()); const c={id:crypto.randomUUID(),projectId,version:(versions[0]?.version ?? 0)+1,definitionJson:JSON.stringify(body.data),engineVersion:result.engineVersion,resolutionJson:JSON.stringify(result),createdAt:now(),createdBy:request.user!.memberId}; return reply.code(201).send(business.createConfiguration(c));
+  const versions=business.listConfigurations(projectId); const result=resolveProject(body.data as ProjectDefinition,await loadCatalog()); const c={id:crypto.randomUUID(),projectId,version:(versions[0]?.version ?? 0)+1,definitionJson:JSON.stringify(body.data),engineVersion:result.engineVersion,resolutionJson:JSON.stringify(result),createdAt:now(),createdBy:request.user!.memberId}; return reply.code(201).send(businessService.createConfiguration(c, request.user!.memberId));
 });
 app.post("/v1/business-projects/:projectId/contracts", async (request, reply) => {
   if (!requireRole(request, reply, ["owner","admin","manager"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=ContractSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_CONTRACT",issues:parsed.error.issues});
-  const c={id:crypto.randomUUID(),projectId,...parsed.data,status:"draft" as const,validUntil:parsed.data.validUntil??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createContract(c));
+  const c={id:crypto.randomUUID(),projectId,...parsed.data,status:"draft" as const,validUntil:parsed.data.validUntil??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createContract(c, request.user!.memberId));
 });
 app.get("/v1/business-projects/:projectId/contracts", async request => business.listContracts(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/installations", async (request, reply) => {
   if (!requireRole(request, reply, ["owner","admin","manager","operator"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=InstallationSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_INSTALLATION",issues:parsed.error.issues});
-  const i={id:crypto.randomUUID(),projectId,...parsed.data,status:parsed.data.status,scheduledAt:parsed.data.scheduledAt??null,completedAt:null,notes:parsed.data.notes??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createInstallation(i));
+  const i={id:crypto.randomUUID(),projectId,...parsed.data,status:parsed.data.status,scheduledAt:parsed.data.scheduledAt??null,completedAt:null,notes:parsed.data.notes??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createInstallation(i, request.user!.memberId));
 });
 app.get("/v1/business-projects/:projectId/installations", async request => business.listInstallations(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/hardware", async (request, reply) => {
@@ -195,7 +190,7 @@ app.post("/v1/business-projects/:projectId/hardware", async (request, reply) => 
 app.get("/v1/business-projects/:projectId/hardware", async request => business.listHardware(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 
-await app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
+app.setErrorHandler((error, request, reply) => {\n  const normalized = toAppError(error);\n  request.log.error({ err: error, code: normalized.code }, "request failed");\n  return reply.code(normalized.statusCode).send({ error: normalized.code, message: normalized.message, details: normalized.details });\n});\n\nawait app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
 
 
 const shutdown = async () => { await app.close(); db.close(); };
