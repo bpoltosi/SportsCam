@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import type { AuditEvent, BusinessProject, Contract, Installation, InstalledHardware, Member, Organization, ProjectConfiguration } from "../../domain/src/business.js";
+import { transitionContract, transitionInstallation, transitionProject } from "../../domain/src/transitions.js";
 
 export class BusinessRepository {
   constructor(private readonly db: DatabaseSync) {}
@@ -19,6 +20,31 @@ export class BusinessRepository {
   listInstallations(projectId: string): Installation[] { return this.db.prepare("SELECT * FROM installations WHERE project_id=? ORDER BY created_at DESC").all(projectId).map(r=>({id:String(r.id),projectId:String(r.project_id),status:r.status as Installation["status"],scheduledAt:r.scheduled_at?String(r.scheduled_at):null,completedAt:r.completed_at?String(r.completed_at):null,notes:r.notes?String(r.notes):null,createdAt:String(r.created_at),updatedAt:String(r.updated_at)})); }
   createHardware(h: InstalledHardware) { this.db.prepare("INSERT INTO installed_hardware VALUES (?,?,?,?,?,?,?,?,?)").run(h.id,h.projectId,h.installationId,h.catalogHardwareId,h.serialNumber,h.quantity,h.status,h.createdAt,h.updatedAt); return h; }
   listHardware(projectId: string): InstalledHardware[] { return this.db.prepare("SELECT * FROM installed_hardware WHERE project_id=? ORDER BY created_at").all(projectId).map(r=>({id:String(r.id),projectId:String(r.project_id),installationId:r.installation_id?String(r.installation_id):null,catalogHardwareId:String(r.catalog_hardware_id),serialNumber:r.serial_number?String(r.serial_number):null,quantity:Number(r.quantity),status:r.status as InstalledHardware["status"],createdAt:String(r.created_at),updatedAt:String(r.updated_at)})); }
+  updateProjectStatus(id: string, status: BusinessProject["status"], updatedAt: string) {
+    const current = this.getProject(id);
+    if (!current) throw new Error("BUSINESS_PROJECT_NOT_FOUND");
+    const next = transitionProject(current.status, status);
+    this.db.prepare("UPDATE business_projects SET status=?,updated_at=? WHERE id=?").run(next, updatedAt, id);
+    return { ...current, status: next, updatedAt };
+  }
+
+  updateContractStatus(id: string, status: Contract["status"], updatedAt: string) {
+    const current = this.db.prepare("SELECT * FROM contracts WHERE id=?").get(id);
+    if (!current) throw new Error("CONTRACT_NOT_FOUND");
+    const next = transitionContract(String(current.status) as Contract["status"], status);
+    this.db.prepare("UPDATE contracts SET status=?,updated_at=? WHERE id=?").run(next, updatedAt, id);
+    return { ...this.listContracts(String(current.project_id)).find((contract) => contract.id === id)!, status: next, updatedAt };
+  }
+
+  updateInstallationStatus(id: string, status: Installation["status"], updatedAt: string) {
+    const current = this.db.prepare("SELECT * FROM installations WHERE id=?").get(id);
+    if (!current) throw new Error("INSTALLATION_NOT_FOUND");
+    const next = transitionInstallation(String(current.status) as Installation["status"], status);
+    const completedAt = next === "installed" ? updatedAt : (current.completed_at ? String(current.completed_at) : null);
+    this.db.prepare("UPDATE installations SET status=?,completed_at=?,updated_at=? WHERE id=?").run(next, completedAt, updatedAt, id);
+    return { ...this.listInstallations(String(current.project_id)).find((installation) => installation.id === id)!, status: next, completedAt, updatedAt };
+  }
+
   audit(e: AuditEvent) { this.db.prepare("INSERT INTO audit_events VALUES (?,?,?,?,?,?,?,?)").run(e.id,e.organizationId,e.actorMemberId,e.action,e.resourceType,e.resourceId,e.metadataJson,e.createdAt); return e; }
   listAudit(orgId: string): AuditEvent[] { return this.db.prepare("SELECT * FROM audit_events WHERE organization_id=? ORDER BY created_at DESC").all(orgId).map(r=>({id:String(r.id),organizationId:String(r.organization_id),actorMemberId:r.actor_member_id?String(r.actor_member_id):null,action:String(r.action),resourceType:String(r.resource_type),resourceId:String(r.resource_id),metadataJson:String(r.metadata_json),createdAt:String(r.created_at)})); }
 }
