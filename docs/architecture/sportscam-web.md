@@ -1,51 +1,65 @@
-# SportsCam Web — Arquitetura Canônica
+# SportsCam Web/App — Arquitetura Canônica
 
 > **Status:** arquitetura vigente
-> **Versão:** 0.1
-> **Escopo:** arquitetura do produto web, separando presença pública/marketing da aplicação autenticada de gestão de projetos.
+> **Versão:** 0.2
+> **Escopo:** separação entre presença pública/marketing na Web e aplicação operacional desktop local.
 > **Última revisão:** 2026-10-03
 
 ## 1. Objetivo
 
-O SportsCam Web terá duas áreas claramente separadas:
+O produto SportsCam será dividido em duas superfícies principais:
 
-1. **Site público/marketing:** apresenta a empresa, soluções, tecnologia, casos de uso e canais comerciais.
-2. **Aplicação autenticada:** permite operar o produto, gerenciar projetos e consumir o SportsCam Engine.
+1. **SportsCam Web:** site público voltado a marketing, apresentação comercial, soluções, tecnologia, casos de uso e geração de oportunidades.
+2. **SportsCam App:** aplicação desktop local para criação, configuração, validação, versionamento e sincronização de projetos.
 
-A aplicação web não deve duplicar a autoridade técnica do Engine.
+O App não depende de autenticação ou de um backend remoto para funcionar.
+
+A arquitetura deve manter o domínio e o SportsCam Engine independentes da UI e da infraestrutura de sincronização.
 
 ## 2. Arquitetura de alto nível
 
 ```
-                    SportsCam Web
-                         |
-             +-----------+-----------+
-             |                       |
-       Public / Marketing      Authenticated App
-             |                       |
-             +-----------+-----------+
-                         |
-                     Backend/API
-                         |
-              +----------+----------+
-              |                     |
-          Database            SportsCam Engine
-              |                     |
-              |              Schemas / Catalog
-              |              Modules / Rules
-              +---------------------+
+                         INTERNET
+                            |
+                  +---------+---------+
+                  |                   |
+            SportsCam Web       GitHub (opcional)
+            Marketing/Sales           ^
+                  |                   |
+                  |             project sync
+                  |                   |
+                  |          +--------+--------+
+                  |          | SportsCam App   |
+                  |          | Desktop / Local |
+                  |          +--------+---------+
+                  |                   |
+                  |              Frontend TS
+                  |                   |
+                  |             API local / IPC
+                  |                   |
+                  |              Backend Python
+                  |                   |
+                  +-----------> SportsCam Engine
+                                      |
+                         +------------+------------+
+                         |                         |
+                    Local Persistence        Versioned Domain
+                       SQLite/files        Schemas/Catalog/Rules
 ```
 
-### Responsabilidades
+## 3. SportsCam Web
 
-- **Public/Marketing:** comunicação e aquisição comercial.
-- **App:** experiência operacional e gestão de projetos.
-- **Backend/API:** autenticação, autorização, persistência, orquestração e contratos.
-- **Database:** estado operacional e histórico dos projetos.
-- **SportsCam Engine:** resolução técnica determinística.
-- **Schemas/Catalog/Rules:** conhecimento versionado consumido pelo Engine.
+A Web continua sendo a superfície comercial.
 
-## 3. Site público
+Responsabilidades:
+
+- apresentar a empresa;
+- apresentar produtos e soluções;
+- explicar tecnologia;
+- mostrar casos de uso;
+- captar contato;
+- receber solicitações de projeto/orçamento;
+- eventualmente direcionar o usuário para o App ou para um fluxo comercial.
 
 Estrutura inicial:
 
@@ -59,191 +73,240 @@ Estrutura inicial:
 - Contato
 - Solicitação de projeto/orçamento
 
-O site público deve explicar o produto sem expor complexidade técnica desnecessária.
+A Web não deve duplicar regras técnicas do Engine.
 
-## 4. Aplicação autenticada
+## 4. SportsCam App
 
-A aplicação terá o projeto como objeto central.
+O App é o sistema operacional de trabalho para projetos.
 
-Estrutura inicial:
+Responsabilidades:
 
-- Dashboard
-- Projetos
-- Novo projeto
-- Projeto
-  - Overview
-  - Definition
-  - Modules
-  - Hardware
-  - Profile
-  - Validation
-  - BOM
-  - History
-- Catálogo
-- Regras
-- Configurações
+- criar e abrir projetos;
+- editar ProjectDefinition;
+- selecionar módulos;
+- selecionar hardware;
+- selecionar profile;
+- executar validações;
+- gerar/visualizar BOM;
+- consultar catálogo e regras;
+- manter histórico;
+- salvar projetos localmente;
+- exportar/importar projetos;
+- sincronizar projetos com GitHub;
+- funcionar offline.
 
-Rotas iniciais:
+Não é requisito inicial:
 
-```
-/
-/app
-/app/dashboard
-/app/projects
-/app/projects/new
-/app/projects/[project]/overview
-/app/projects/[project]/definition
-/app/projects/[project]/modules
-/app/projects/[project]/hardware
-/app/projects/[project]/profile
-/app/projects/[project]/validation
-/app/projects/[project]/bom
-/app/projects/[project]/history
-/app/catalog
-/app/rules
-/app/settings
-```
+- login;
+- usuários remotos;
+- organizações remotas;
+- sessão de usuário;
+- API pública;
+- banco de dados remoto;
+- SaaS multi-tenant.
 
-## 5. Fluxo principal do produto
+## 5. Frontend
 
-Fluxo de referência para o protótipo:
+O frontend do App será prioritariamente:
 
-```
-Home
-  -> Solicitar projeto
-  -> Login / acesso
-  -> Dashboard
-  -> Novo projeto
-  -> Definir projeto
-  -> Selecionar módulos
-  -> Selecionar hardware
-  -> Selecionar profile
-  -> Validar
-  -> Corrigir problemas
-  -> Gerar/visualizar BOM
-  -> Resumo do projeto
-```
+- TypeScript;
+- React;
+- stack auxiliar de UI/UX escolhida conforme necessidade;
+- design system reutilizável.
 
-O protótipo deve permitir percorrer esse fluxo mesmo quando os dados e funções forem simulados.
+O frontend é responsável pela apresentação e interação, não pela autoridade técnica.
 
-## 6. Project como centro
+A mesma orientação vale para o Web quando houver componentes ou conceitos compartilhados.
 
-Um projeto representa uma configuração técnica versionada.
+## 6. Backend
 
-Conceitualmente:
+O backend do sistema será prioritariamente desenvolvido em **Python**, sempre que tecnicamente apropriado.
 
-```
-Project
-  |
-  +-- ProjectVersion
-       |
-       +-- ProjectDefinition
-       +-- Modules
-       +-- Hardware
-       +-- InstallationProfile
-       +-- ValidationResult
-       +-- BOM
-       +-- History
-```
+Responsabilidades:
 
-A BOM e os resultados de validação devem ser associados à versão que os produziu.
+- application services;
+- orquestração de casos de uso;
+- acesso à persistência;
+- import/export;
+- integração com Git;
+- sincronização com GitHub;
+- integração com o Engine;
+- tarefas de domínio que façam sentido no backend;
+- futuras automações e serviços locais.
 
-## 7. Fronteira entre Web e Engine
+O backend será executado localmente pelo App.
 
-O Web não deve implementar regras técnicas duplicadas.
+A comunicação entre frontend e backend pode utilizar API local, IPC ou mecanismo equivalente, conforme a tecnologia desktop escolhida.
 
-Fluxo:
+### Regra de linguagem
+
+- **Frontend:** TypeScript por padrão.
+- **Backend e sistemas auxiliares:** Python por padrão.
+- **SportsCam Engine:** permanece um componente de domínio independente da UI e do transporte. A linguagem de implementação não deve ser usada como acoplamento arquitetural; qualquer mudança deve ser registrada explicitamente.
+- Outras linguagens só devem ser introduzidas quando houver benefício técnico claro.
+
+## 7. SportsCam Engine
+
+O Engine continua sendo a autoridade determinística para:
+
+- composição;
+- resolução;
+- compatibilidade;
+- validação;
+- geração de configuração;
+- BOM;
+- aplicação de Rules;
+- uso de Hardware, Module e Profile versionados.
+
+O frontend não implementa essas regras.
+
+O backend também não deve criar uma segunda autoridade técnica.
+
+Fluxo conceitual:
 
 ```
-Frontend
-   |
-   v
-API Contract
-   |
-   v
-Backend
-   |
-   +--> Database
-   |
-   +--> SportsCam Engine
-            |
-            +--> Schemas
-            +--> Catalog
-            +--> Modules
-            +--> Rules
+Frontend TS
+    |
+    v
+Backend Python
+    |
+    v
+SportsCam Engine
+    |
+    +--> ProjectDefinition
+    +--> Hardware
+    +--> Module
+    +--> Rule
+    +--> InstallationProfile
+    +--> BOM
 ```
 
-Exemplos conceituais de contratos:
+## 8. Persistência local
 
-- `GET /projects/{id}`
-- `POST /projects`
-- `POST /projects/{id}/versions`
-- `POST /projects/{id}/validation`
-- `GET /projects/{id}/bom`
+A persistência inicial será local.
 
-Os contratos finais serão definidos depois do protótipo e antes da implementação funcional.
+Preferência:
 
-## 8. Modelo operacional inicial
+1. SQLite para estado estruturado;
+2. arquivos versionáveis para artefatos/documentos quando isso trouxer vantagem;
+3. formatos abertos e portáveis.
 
-Entidades candidatas do banco:
+O App deve continuar funcional sem internet.
 
-- users
-- organizations
-- projects
-- project_members
-- project_versions
-- project_definitions
-- validations
-- bom_snapshots
-- audit_log
+A persistência local não deve ser confundida com o repositório Git.
 
-Catálogos técnicos como hardware, modules, rules e profiles pertencem ao domínio versionado do Engine. A aplicação poderá manter referências/cache operacional, mas não deve criar uma segunda autoridade para esses dados.
+- **SQLite/files:** estado operacional local.
+- **Git/GitHub:** versionamento, histórico técnico, colaboração e sincronização.
 
-## 9. Versionamento
+## 9. GitHub como sincronização e histórico técnico
 
-Um projeto deve permitir histórico de versões.
+Projetos do SportsCam App poderão ser sincronizados com GitHub.
 
-Uma versão deve identificar, no mínimo:
+O objetivo não é simplesmente fazer backup do projeto. O objetivo é manter **cada projeto reproduzível e tecnicamente documentado**.
+
+Um projeto sincronizado deve conter, sempre que aplicável:
 
 - ProjectDefinition;
+- versão do projeto;
 - EngineVersion;
 - CatalogVersion;
 - RulesVersion;
-- resultado de validação;
-- BOM derivada.
+- InstallationProfile;
+- ValidationResult;
+- BOM;
+- manifest do projeto;
+- metadados de geração;
+- referências aos módulos/hardware utilizados;
+- arquivos de configuração;
+- documentação técnica derivada;
+- histórico de alterações.
 
-Isso permite reproduzir e explicar resultados técnicos.
+O conteúdo deve ser organizado em uma estrutura determinística e adequada a diff/review.
 
-## 10. Design e protótipo
+Exemplo:
 
-Antes da implementação funcional será criado um protótipo navegável completo.
+```
+project/
+├── project.yaml
+├── manifest.yaml
+├── definition.yaml
+├── profile.yaml
+├── modules/
+├── hardware/
+├── rules/
+├── validation/
+├── bom/
+├── generated/
+├── docs/
+└── history/
+```
 
-O protótipo deve cobrir:
+A estrutura final será definida na etapa de contratos/dados.
 
-- identidade visual;
-- design system;
-- navegação;
-- páginas públicas;
-- autenticação;
-- dashboard;
-- fluxo completo de projeto;
-- tabelas;
-- formulários;
-- estados vazios;
-- loading;
-- sucesso;
-- erro;
-- validações;
-- histórico;
-- BOM.
+## 10. GitHub não deve virar requisito de execução
 
-O protótipo pode usar dados mockados. O objetivo é validar estrutura, UX e fluxos antes de definir os contratos finais.
+Um projeto deve funcionar mesmo sem GitHub.
 
-## 11. Fora do escopo
+GitHub é uma camada de:
 
-A arquitetura web não deve reintroduzir no produto central os conceitos físicos explicitamente excluídos do SportsCam Engine.
+- sincronização;
+- versionamento;
+- colaboração;
+- backup;
+- auditoria técnica;
+- rastreabilidade.
 
-Não fazem parte do modelo de projeto do produto:
+O App continua sendo capaz de criar, abrir, editar e validar projetos offline.
+
+## 11. Autenticação
+
+O App local não terá autenticação própria como requisito arquitetural.
+
+Quando o usuário quiser sincronizar com GitHub, a autenticação pertence ao mecanismo Git/GitHub utilizado para o repositório.
+
+Preferência:
+
+- Git configurado localmente;
+- credenciais/SSH/GitHub CLI já existentes no ambiente;
+- nenhuma senha do GitHub armazenada pelo SportsCam App.
+
+Assim, a ausência de autenticação no App não impede a sincronização opcional.
+
+## 12. Reprodutibilidade
+
+Cada projeto sincronizado deve permitir responder:
+
+- qual configuração foi criada;
+- com qual versão do Engine;
+- com qual catálogo;
+- com quais regras;
+- com quais módulos;
+- com quais hardwares;
+- qual validação foi executada;
+- qual BOM foi gerada;
+- quais arquivos foram produzidos.
+
+O projeto deve carregar referências suficientes para reconstruir o contexto técnico correspondente, respeitando a evolução do catálogo e do Engine.
+
+## 13. Futuras aplicações e sistemas
+
+Novos sistemas do ecossistema SportsCam devem seguir a mesma orientação quando apropriado:
+
+- backend Python;
+- frontend TypeScript;
+- domínio independente;
+- execução local quando não houver necessidade de serviço remoto;
+- formatos abertos;
+- Git como mecanismo de versionamento quando fizer sentido;
+- custo zero como princípio arquitetural.
+
+Isso não impede sistemas futuros de possuírem serviços remotos quando houver uma necessidade real. Apenas evita transformar infraestrutura remota em requisito artificial.
+
+## 14. Fora do escopo
+
+A arquitetura não deve reintroduzir no produto central os conceitos físicos explicitamente excluídos do SportsCam Engine.
+
+Não fazem parte do modelo estrutural do projeto:
 
 - altura de câmera;
 - direção/orientação;
@@ -256,36 +319,18 @@ Não fazem parte do modelo de projeto do produto:
 - engenharia civil/elétrica/estrutural;
 - instruções de instalação física.
 
-Esses assuntos podem existir em processos externos, mas não devem aparecer como requisitos estruturais do ProjectDefinition ou como lógica do Engine.
+## 15. Ordem oficial de execução
 
-## 12. Ordem oficial de execução
+1. **Arquitetura:** fechar fronteiras Web/App/Backend/Engine/GitHub.
+2. **UX/Fluxos:** definir navegação e experiência do Web e App.
+3. **Protótipo completo:** construir protótipo navegável.
+4. **Contratos e dados:** definir APIs locais, schemas, persistência e formato de projeto versionável.
+5. **Implementação:** frontend TypeScript, backend Python, Engine e integração Git/GitHub.
+6. **Testes:** unitários, contratos, Engine determinístico, integração e E2E.
+7. **Integração/Homologação:** validar criação, abertura, edição, validação, geração de BOM, persistência e sincronização.
 
-A construção do produto seguirá esta sequência:
+## 16. Regra de precedência
 
-1. **Arquitetura:** fechar arquitetura do Web/App e suas fronteiras.
-2. **UX/Fluxos:** definir navegação, atores e fluxos principais.
-3. **Protótipo completo:** construir o protótipo navegável, ainda sem funções reais.
-4. **Contratos e dados:** definir API, schemas de persistência, versionamento e modelo de banco.
-5. **Implementação:** desenvolver frontend, backend e integração com o Engine.
-6. **Testes:** testes unitários, contratos, Engine determinístico e E2E.
-7. **Integração/Homologação:** validar o produto integrado e corrigir inconsistências.
-
-A ordem é deliberada: não implementar lógica antes de estabilizar a experiência e os contratos.
-
-## 13. Critério para avançar de etapa
-
-Cada etapa deve deixar um artefato verificável.
-
-- Arquitetura -> documento e mapa de navegação.
-- UX/Fluxos -> fluxos e estados definidos.
-- Protótipo -> protótipo completo e navegável.
-- Contratos/Dados -> API e modelo persistente definidos.
-- Implementação -> funcionalidades integradas.
-- Testes -> suíte automatizada e critérios de aceitação.
-- Homologação -> fluxo integrado validado.
-
-## 14. Regra de precedência
-
-Este documento é a referência canônica para a arquitetura do SportsCam Web.
+Este documento é a referência canônica para a arquitetura Web/App.
 
 Em caso de conflito com documentação anterior, esta definição prevalece até que uma nova decisão arquitetural seja registrada explicitamente.
