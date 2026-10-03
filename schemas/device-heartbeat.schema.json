@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/device-heartbeat.schema.json",
+  "title":"SportsCam Device Heartbeat","type":"object","additionalProperties":false,
+  "required":["deviceId","sentAt","status","agentVersion"],
+  "properties":{"deviceId":{"type":"string"},"sentAt":{"type":"string","format":"date-time"},"status":{"enum":["online","degraded","offline"]},"agentVersion":{"type":"string"},"metrics":{"type":"object"},"cameraStates":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["cameraId","status"],"properties":{"cameraId":{"type":"string"},"status":{"enum":["online","offline","degraded"]},"fps":{"type":"number"},"bitrateKbps":{"type":"number"}}}}}
+}
