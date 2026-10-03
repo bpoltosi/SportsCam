@@ -139,6 +139,7 @@ const RecordingSchema = z.object({ id:z.string().min(1), cameraId:z.string().nul
 const SegmentSchema = z.object({ id:z.string().min(1), sequence:z.number().int().nonnegative(), startedAt:z.string().datetime(), durationMs:z.number().int().positive(), localPath:z.string().nullable().optional(), objectKey:z.string().nullable().optional(), byteSize:z.number().int().nonnegative().nullable().optional(), checksum:z.string().nullable().optional() });
 const DeviceCommandSchema = z.object({ id:z.string().min(1), type:z.string().min(1), payload:z.record(z.unknown()).default({}) });
 const DeviceCommandAckSchema = z.object({ success:z.boolean(), errorMessage:z.string().nullable().optional() });
+const CameraSchema = z.object({ id:z.string().min(1), deviceId:z.string().nullable().optional(), name:z.string().min(1), catalogHardwareId:z.string().nullable().optional(), status:z.enum(["online","degraded","offline","disabled"]).default("offline"), configuration:z.record(z.unknown()).default({}) });
 
 app.post("/v1/edge/devices/register", async (request, reply) => {
   const parsed = DeviceRegistrationSchema.safeParse(request.body);
@@ -159,6 +160,28 @@ app.post("/v1/edge/devices/:deviceId/heartbeat", async (request, reply) => {
   return media.heartbeat(deviceId, parsed.data);
 });
 
+app.get("/v1/organizations/:orgId/cameras", async (request, reply) => {
+  const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params);
+  if (orgId!==request.user!.organizationId) return reply.code(403).send({error:"FORBIDDEN"});
+  return media.listCameras(orgId);
+});
+app.post("/v1/business-projects/:projectId/cameras", async (request, reply) => {
+  assertRole(request.user, ["owner","admin","manager","operator"]);
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId!==request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  const parsed=CameraSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_CAMERA",issues:parsed.error.issues});
+  try {
+    return reply.code(201).send(media.createCamera({id:parsed.data.id,organizationId:request.user!.organizationId,deviceId:parsed.data.deviceId,projectId,name:parsed.data.name,catalogHardwareId:parsed.data.catalogHardwareId,status:parsed.data.status,configuration:parsed.data.configuration}));
+  } catch { return reply.code(409).send({error:"CAMERA_ALREADY_EXISTS"}); }
+});
+app.get("/v1/business-projects/:projectId/cameras", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId!==request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  return media.listCameras(request.user!.organizationId,projectId);
+});
 app.get("/v1/edge/devices", async request => media.listDevices(request.user!.organizationId));
 app.post("/v1/edge/devices/:deviceId/commands", async (request, reply) => {
   assertRole(request.user, ["owner","admin","manager","operator"]);
