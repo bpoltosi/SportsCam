@@ -70,7 +70,7 @@ app.post("/v1/auth/register", async (request, reply) => {
 });
 app.post("/v1/auth/login", async (request, reply) => {
   const parsed=LoginSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_LOGIN"});
-  const member=business.listMembersByEmail?.(parsed.data.email);
+  const member=business.getMemberByEmail(parsed.data.email);
   if(!member || !auth.verifyPassword(member.id,parsed.data.password)) return reply.code(401).send({error:"INVALID_CREDENTIALS"});
   return {session:auth.createSession(member.id),member};
 });
