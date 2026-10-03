@@ -7,6 +7,7 @@ import { openDatabase, SQLiteProjectRepository, SQLiteResolutionRepository, Busi
 import { AuthService } from "../../../packages/auth/src/index.js";
 import { assertRole } from "./application/authorization.js";
 import { BusinessService } from "./application/business-service.js";
+import { MediaRepository } from "../../../packages/persistence/src/media.js";
 import { AppError, toAppError } from "./application/errors.js";
 
 const app = Fastify({ logger: true });
@@ -18,6 +19,7 @@ const resolutionRepository = new SQLiteResolutionRepository(db);
 const business = new BusinessRepository(db);
 const auth = new AuthService(db);
 const businessService = new BusinessService(business);
+const media = new MediaRepository(db);
 
 const ProjectSchema = z.object({ project: z.object({
   id: z.string().min(1), version: z.string().min(1), sport: z.string().min(1),
@@ -63,6 +65,14 @@ app.addHook("preHandler", async (request, reply) => {
 
   const header = request.headers.authorization;
   const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  const isEdgeRuntime = request.url.startsWith("/v1/edge/devices/") && !request.url.endsWith("/register");
+  if (isEdgeRuntime && token) {
+    const device = media.authenticateDevice(token);
+    if (device) {
+      request.device = device;
+      return;
+    }
+  }
   const user = token ? auth.authenticate(token) : null;
   if (!user) return reply.code(401).send({ error: "UNAUTHORIZED" });
   request.user = user;
@@ -104,6 +114,76 @@ app.post("/v1/auth/login", async (request, reply) => {
   const member=business.getMemberByEmail(parsed.data.email);
   if(!member || !auth.verifyPassword(member.id,parsed.data.password)) return reply.code(401).send({error:"INVALID_CREDENTIALS"});
   return {session:auth.createSession(member.id),member};
+});
+
+const DeviceRegistrationSchema = z.object({ id: z.string().min(1), name: z.string().min(1), agentVersion: z.string().min(1), hardwareProfile: z.string().nullable().optional() });
+const HeartbeatSchema = z.object({
+  status: z.enum(["online","degraded","offline","disabled"]),
+  agentVersion: z.string().min(1),
+  metrics: z.record(z.unknown()).optional(),
+  cameraStates: z.record(z.unknown()).optional(),
+});
+const EventSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().nullable().optional(),
+  recordingId: z.string().nullable().optional(),
+  timestampMs: z.number().int().nonnegative(),
+  type: z.string().min(1),
+  source: z.enum(["manual","sensor","integration","algorithm","ai"]),
+  metadata: z.record(z.unknown()).default({}),
+});
+const ClipSchema = z.object({ id: z.string().min(1), eventId: z.string().min(1), projectId: z.string().nullable().optional(), preSeconds: z.number().min(0).max(300), postSeconds: z.number().min(0).max(300), sourceRevision: z.number().int().positive().default(1) });
+
+app.post("/v1/edge/devices/register", async (request, reply) => {
+  const parsed = DeviceRegistrationSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error:"INVALID_DEVICE_REGISTRATION", issues:parsed.error.issues });
+  try {
+    const device = media.registerDevice({ id:parsed.data.id, organizationId:request.user!.organizationId, name:parsed.data.name, agentVersion:parsed.data.agentVersion, hardwareProfile:parsed.data.hardwareProfile });
+    return reply.code(201).send(device);
+  } catch { return reply.code(409).send({ error:"DEVICE_ALREADY_EXISTS" }); }
+});
+
+app.post("/v1/edge/devices/:deviceId/heartbeat", async (request, reply) => {
+  if (!request.device) return reply.code(401).send({ error:"DEVICE_UNAUTHORIZED" });
+  const { deviceId } = z.object({deviceId:z.string().min(1)}).parse(request.params);
+  if (deviceId !== request.device.id) return reply.code(403).send({error:"FORBIDDEN"});
+  const parsed = HeartbeatSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_HEARTBEAT",issues:parsed.error.issues});
+  return media.heartbeat(deviceId, parsed.data);
+});
+
+app.get("/v1/edge/devices", async request => media.listDevices(request.user!.organizationId));
+app.get("/v1/projects/:projectId/events", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  return media.listEvents(projectId);
+});
+app.post("/v1/projects/:projectId/events", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  const parsed=EventSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_EVENT",issues:parsed.error.issues});
+  return reply.code(201).send(media.createEvent({id:parsed.data.id,organizationId:request.user!.organizationId,projectId,recordingId:parsed.data.recordingId,timestampMs:parsed.data.timestampMs,type:parsed.data.type,source:parsed.data.source,metadataJson:JSON.stringify(parsed.data.metadata)}));
+});
+app.get("/v1/projects/:projectId/clips", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  return media.listClips(projectId);
+});
+app.post("/v1/projects/:projectId/clips", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  const parsed=ClipSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_CLIP",issues:parsed.error.issues});
+  const event=media.getClip(parsed.data.id);
+  if (event) return reply.code(409).send({error:"CLIP_ALREADY_EXISTS"});
+  try {
+    return reply.code(202).send(media.enqueueClip({id:parsed.data.id,organizationId:request.user!.organizationId,projectId,eventId:parsed.data.eventId,preSeconds:parsed.data.preSeconds,postSeconds:parsed.data.postSeconds,sourceRevision:parsed.data.sourceRevision}));
+  } catch { return reply.code(409).send({error:"CLIP_ENQUEUE_FAILED"}); }
 });
 
 app.get("/v1/projects", async request => projectRepository.list(request.user!.organizationId));
