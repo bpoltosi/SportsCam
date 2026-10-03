@@ -136,8 +136,7 @@ app.post("/v1/business-projects/:projectId/configurations", async (request, repl
   const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
   const project=business.getProject(projectId); if(!project) return reply.code(404).send({error:"BUSINESS_PROJECT_NOT_FOUND"});
   const body=ProjectSchema.safeParse(request.body); if(!body.success) return reply.code(400).send({error:"INVALID_PROJECT_DEFINITION",issues:body.error.issues});
-  const versions=business.listConfigurations(projectId); const c={id:crypto.randomUUID(),projectId,version:(versions[0]?.version ?? 0)+1,definitionJson:JSON.stringify(body.data),engineVersion:null,resolutionJson:null,createdAt:now(),createdBy:"system"}; 
-  const result=resolveProject(body.data as ProjectDefinition,await loadCatalog()); c.engineVersion=result.engineVersion; c.resolutionJson=JSON.stringify(result); return reply.code(201).send(business.createConfiguration(c));
+  const versions=business.listConfigurations(projectId); const result=resolveProject(body.data as ProjectDefinition,await loadCatalog()); const c={id:crypto.randomUUID(),projectId,version:(versions[0]?.version ?? 0)+1,definitionJson:JSON.stringify(body.data),engineVersion:result.engineVersion,resolutionJson:JSON.stringify(result),createdAt:now(),createdBy:"system"}; return reply.code(201).send(business.createConfiguration(c));
 });
 app.post("/v1/business-projects/:projectId/contracts", async (request, reply) => {
   const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=ContractSchema.safeParse(request.body);
