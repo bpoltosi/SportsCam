@@ -87,7 +87,7 @@ function requireRole(request: { user?: ReturnType<AuthService["authenticate"]> }
   return true;
 }
 
-app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.2.0" }));
+app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.3.0" }));
 app.post("/v1/auth/register", async (request, reply) => {
   const parsed=RegisterSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_REGISTRATION",issues:parsed.error.issues});
   const timestamp=now(), organization={id:crypto.randomUUID(),name:parsed.data.organizationName,slug:parsed.data.slug,createdAt:timestamp,updatedAt:timestamp};
