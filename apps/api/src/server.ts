@@ -141,12 +141,14 @@ app.post("/v1/engine/resolve", async (request, reply) => {
   if (!parsed.success) return reply.code(400).send({ error: "INVALID_PROJECT_DEFINITION", issues: parsed.error.issues });
   const result = resolveProject(parsed.data as ProjectDefinition, await loadCatalog());
   const project = await projectRepository.get(parsed.data.project.id);
-  if (project) resolutionRepository.save({ id: crypto.randomUUID(), projectId: project.id, engineVersion: result.engineVersion, createdAt: now(), inputJson: JSON.stringify(parsed.data), resultJson: JSON.stringify(result) });
+  if (project && project.organizationId === request.user!.organizationId) resolutionRepository.save({ id: crypto.randomUUID(), projectId: project.id, engineVersion: result.engineVersion, createdAt: now(), inputJson: JSON.stringify(parsed.data), resultJson: JSON.stringify(result) });
   return result;
 });
 app.get("/v1/projects/:id/resolutions", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
-  if (!await projectRepository.get(id)) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
+  const ownedProject = await projectRepository.get(id);
+  if (!ownedProject) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
+  if (ownedProject.organizationId && ownedProject.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   return resolutionRepository.listByProject(id);
 });
 
@@ -209,7 +211,7 @@ app.patch("/v1/contracts/:contractId/status", async (request, reply) => {
 
 app.get("/v1/business-projects/:projectId/installations", async request => business.listInstallations(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/hardware", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin","manager","operator"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=HardwareSchema.safeParse(request.body);
+  assertRole(request.user, ["owner","admin","manager","operator"]); const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=HardwareSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_INSTALLED_HARDWARE",issues:parsed.error.issues});
   const h={id:crypto.randomUUID(),projectId,...parsed.data,quantity:parsed.data.quantity,serialNumber:parsed.data.serialNumber??null,installationId:parsed.data.installationId??null,status:"planned" as const,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createHardware(h));
 });
