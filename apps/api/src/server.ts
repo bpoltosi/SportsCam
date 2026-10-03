@@ -184,6 +184,14 @@ app.get("/v1/business-projects/:projectId/cameras", async (request, reply) => {
   return media.listCameras(request.user!.organizationId,projectId);
 });
 app.get("/v1/edge/devices", async request => media.listDevices(request.user!.organizationId));
+app.post("/v1/edge/devices/:deviceId/rotate-credential", async (request, reply) => {
+  assertRole(request.user, ["owner","admin"]);
+  const {deviceId}=z.object({deviceId:z.string().min(1)}).parse(request.params);
+  const device=media.listDevices(request.user!.organizationId).find((item:any)=>String(item.id)===deviceId);
+  if (!device) return reply.code(404).send({error:"DEVICE_NOT_FOUND"});
+  return {deviceId, token:media.rotateDeviceCredential(deviceId)};
+});
+
 app.post("/v1/edge/devices/:deviceId/commands", async (request, reply) => {
   assertRole(request.user, ["owner","admin","manager","operator"]);
   const {deviceId}=z.object({deviceId:z.string().min(1)}).parse(request.params);
