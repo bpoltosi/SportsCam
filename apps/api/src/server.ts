@@ -197,7 +197,9 @@ app.get("/v1/edge/devices/:deviceId/commands", async (request, reply) => {
   if (!request.device) return reply.code(401).send({error:"DEVICE_UNAUTHORIZED"});
   const {deviceId}=z.object({deviceId:z.string().min(1)}).parse(request.params);
   if (deviceId!==request.device.id) return reply.code(403).send({error:"FORBIDDEN"});
-  return media.pullDeviceCommands(deviceId);
+  const query=(request.query as {limit?:string})?.limit;
+  const limit=query ? Number(query) : 20;
+  return media.pullDeviceCommands(deviceId, Number.isFinite(limit) ? limit : 20);
 });
 app.post("/v1/edge/devices/:deviceId/commands/:commandId/ack", async (request, reply) => {
   if (!request.device) return reply.code(401).send({error:"DEVICE_UNAUTHORIZED"});
