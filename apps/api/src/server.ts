@@ -137,6 +137,8 @@ const EventSchema = z.object({
 const ClipSchema = z.object({ id: z.string().min(1), eventId: z.string().min(1), projectId: z.string().nullable().optional(), preSeconds: z.number().min(0).max(300), postSeconds: z.number().min(0).max(300), sourceRevision: z.number().int().positive().default(1) });
 const RecordingSchema = z.object({ id:z.string().min(1), cameraId:z.string().nullable().optional(), status:z.enum(["starting","recording","stopping","complete","failed"]), startedAt:z.string().datetime(), endedAt:z.string().datetime().nullable().optional(), sourceRevision:z.number().int().positive().default(1) });
 const SegmentSchema = z.object({ id:z.string().min(1), sequence:z.number().int().nonnegative(), startedAt:z.string().datetime(), durationMs:z.number().int().positive(), localPath:z.string().nullable().optional(), objectKey:z.string().nullable().optional(), byteSize:z.number().int().nonnegative().nullable().optional(), checksum:z.string().nullable().optional() });
+const DeviceCommandSchema = z.object({ id:z.string().min(1), type:z.string().min(1), payload:z.record(z.unknown()).default({}) });
+const DeviceCommandAckSchema = z.object({ success:z.boolean(), errorMessage:z.string().nullable().optional() });
 
 app.post("/v1/edge/devices/register", async (request, reply) => {
   const parsed = DeviceRegistrationSchema.safeParse(request.body);
@@ -158,6 +160,30 @@ app.post("/v1/edge/devices/:deviceId/heartbeat", async (request, reply) => {
 });
 
 app.get("/v1/edge/devices", async request => media.listDevices(request.user!.organizationId));
+app.post("/v1/edge/devices/:deviceId/commands", async (request, reply) => {
+  assertRole(request.user, ["owner","admin","manager","operator"]);
+  const {deviceId}=z.object({deviceId:z.string().min(1)}).parse(request.params);
+  const device=media.listDevices(request.user!.organizationId).find((item:any)=>String(item.id)===deviceId);
+  if (!device) return reply.code(404).send({error:"DEVICE_NOT_FOUND"});
+  const parsed=DeviceCommandSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_DEVICE_COMMAND",issues:parsed.error.issues});
+  return reply.code(201).send(media.enqueueDeviceCommand({id:parsed.data.id,organizationId:request.user!.organizationId,deviceId,type:parsed.data.type,payload:parsed.data.payload}));
+});
+app.get("/v1/edge/devices/:deviceId/commands", async (request, reply) => {
+  if (!request.device) return reply.code(401).send({error:"DEVICE_UNAUTHORIZED"});
+  const {deviceId}=z.object({deviceId:z.string().min(1)}).parse(request.params);
+  if (deviceId!==request.device.id) return reply.code(403).send({error:"FORBIDDEN"});
+  return media.pullDeviceCommands(deviceId);
+});
+app.post("/v1/edge/devices/:deviceId/commands/:commandId/ack", async (request, reply) => {
+  if (!request.device) return reply.code(401).send({error:"DEVICE_UNAUTHORIZED"});
+  const {deviceId,commandId}=z.object({deviceId:z.string().min(1),commandId:z.string().min(1)}).parse(request.params);
+  if (deviceId!==request.device.id) return reply.code(403).send({error:"FORBIDDEN"});
+  const parsed=DeviceCommandAckSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_COMMAND_ACK",issues:parsed.error.issues});
+  return media.acknowledgeDeviceCommand(commandId,deviceId,parsed.data.success,parsed.data.errorMessage);
+});
+
 app.get("/v1/projects/:projectId/recordings", async (request, reply) => {
   const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
   const project=business.getProject(projectId);
