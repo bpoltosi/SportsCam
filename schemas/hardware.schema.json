@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/hardware.schema.json",
+  "title":"SportsCam Hardware",
+  "type":"object","additionalProperties":false,
+  "required":["id","category","model","capabilities"],
+  "properties":{
+    "id":{"type":"string","minLength":1},
+    "category":{"type":"string","minLength":1},
+    "manufacturer":{"type":"string","minLength":1},
+    "model":{"type":"string","minLength":1},
+    "version":{"type":"string","minLength":1},
+    "capabilities":{"type":"object"},
+    "compatibility":{"type":"object"},
+    "homologation":{"type":"object","additionalProperties":false,"properties":{"status":{"enum":["candidate","approved","deprecated"]},"verifiedAt":{"type":"string","format":"date-time"}}},
+    "referencePrice":{"type":"object","additionalProperties":false,"required":["value","currency","referenceDate"],"properties":{"value":{"type":"number","minimum":0},"currency":{"type":"string","minLength":3,"maxLength":3},"referenceDate":{"type":"string","format":"date"},"source":{"type":"string"},"url":{"type":"string","format":"uri"}}}
+  }
+}
