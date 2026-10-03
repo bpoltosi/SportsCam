@@ -121,7 +121,7 @@ const HeartbeatSchema = z.object({
   status: z.enum(["online","degraded","offline","disabled"]),
   agentVersion: z.string().min(1),
   metrics: z.record(z.unknown()).optional(),
-  cameraStates: z.record(z.unknown()).optional(),
+  cameraStates: z.array(z.object({ cameraId:z.string().min(1), status:z.enum(["online","offline","degraded"]), fps:z.number().optional(), bitrateKbps:z.number().optional() })).optional(),
 });
 const EventSchema = z.object({
   id: z.string().min(1),
