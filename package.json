@@ -9,14 +9,17 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run check:catalog && npm test",
+    "check": "npm run typecheck && npm run check:catalog && npm run check:schemas && npm test",
     "engine": "tsx packages/engine/src/cli.ts",
-    "check:catalog": "tsx packages/engine/src/catalog-check.ts"
+    "check:catalog": "tsx packages/engine/src/catalog-check.ts",
+    "check:schemas": "tsx scripts/check-schemas.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "fastify": "^5.0.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
