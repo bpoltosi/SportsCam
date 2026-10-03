@@ -26,3 +26,8 @@ Exemplo:
 ```bash
 python -m sportscam_runtime.cli replay --input recording.mkv --event 600 --pre 10 --post 10 --output clips/replay.mp4
 ```
+
+
+## SportsCam Web
+
+O site público/comercial está em `apps/web` e é publicado por GitHub Pages via `.github/workflows/web-pages.yml`. A pesquisa e as decisões de UX estão em `docs/research/public-site-design-research.md` e `docs/ux/public-site.md`.
