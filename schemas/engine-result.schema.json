@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sportscam.local/schemas/engine-result.schema.json",
+  "title": "SportsCam EngineResult",
+  "type": "object",
+  "required": ["valid","engineVersion","modules","compatibleHardware","dependencies","appliedRules","bom","diagnostics"],
+  "additionalProperties": false,
+  "properties": {
+    "valid":{"type":"boolean"},
+    "engineVersion":{"type":"string"},
+    "modules":{"type":"array","items":{"type":"string"}},
+    "compatibleHardware":{"type":"array","items":{"type":"string"}},
+    "dependencies":{"type":"array","items":{"type":"string"}},
+    "appliedRules":{"type":"array","items":{"type":"string"}},
+    "bom":{"type":"array","items":{"type":"object","required":["hardwareId","quantity","source"],"additionalProperties":false,"properties":{"hardwareId":{"type":"string"},"quantity":{"type":"integer","minimum":1},"source":{"type":"object","required":["type"],"properties":{"type":{"enum":["project","module_dependency"]},"module":{"type":"string"}}}}}},
+    "diagnostics":{"type":"array","items":{"type":"object","required":["code","severity","message"],"properties":{"code":{"type":"string"},"severity":{"enum":["error","warning","info"]},"message":{"type":"string"},"source":{"type":"string"}}}}
+  }
+}
