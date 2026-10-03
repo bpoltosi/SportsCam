@@ -213,7 +213,7 @@
       "reference_price": {
         "value": 203.52,
         "currency": "USD",
-        "reference_date": "2026-09-2026",
+        "reference_date": "2026-09-01",
         "source": "aliexpress"
       },
       "purchase_reference": {
