@@ -121,6 +121,74 @@ paths:
           schema: {type: string}
       responses:
         '204': {description: Acknowledged}
+  /v1/projects/{projectId}/recordings:
+    get:
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Recordings}
+    post:
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, status, startedAt]
+              properties:
+                id: {type: string}
+                cameraId: {type: string, nullable: true}
+                status: {type: string, enum: [starting, recording, stopping, complete, failed]}
+                startedAt: {type: string, format: date-time}
+                endedAt: {type: string, format: date-time, nullable: true}
+                sourceRevision: {type: integer, minimum: 1}
+      responses:
+        '201': {description: Recording created}
+  /v1/recordings/{recordingId}/segments:
+    get:
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: recordingId
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Recording segments}
+    post:
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: recordingId
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, sequence, startedAt, durationMs]
+              properties:
+                id: {type: string}
+                sequence: {type: integer, minimum: 0}
+                startedAt: {type: string, format: date-time}
+                durationMs: {type: integer, minimum: 1}
+                localPath: {type: string, nullable: true}
+                objectKey: {type: string, nullable: true}
+                byteSize: {type: integer, minimum: 0, nullable: true}
+                checksum: {type: string, nullable: true}
+      responses:
+        '201': {description: Segment created}
   /v1/projects/{projectId}/events:
     post:
       parameters:
