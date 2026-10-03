@@ -102,6 +102,16 @@ paths:
               $ref: '#/components/schemas/DeviceHeartbeat'
       responses:
         '200': {description: Accepted}
+  /v1/edge/devices/{deviceId}/rotate-credential:
+    post:
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: New device credential}
   /v1/edge/devices/{deviceId}/commands:
     get:
       parameters:
