@@ -34,6 +34,27 @@ export class BusinessRepository {
     return { ...current, status: next, updatedAt };
   }
 
+  getContract(id: string): Contract | null {
+    const r = this.db.prepare("SELECT * FROM contracts WHERE id=?").get(id);
+    return r ? {
+      id: String(r.id), projectId: String(r.project_id), number: String(r.number),
+      status: r.status as Contract["status"], currency: String(r.currency),
+      totalCents: Number(r.total_cents), validUntil: r.valid_until ? String(r.valid_until) : null,
+      createdAt: String(r.created_at), updatedAt: String(r.updated_at),
+    } : null;
+  }
+
+  getInstallation(id: string): Installation | null {
+    const r = this.db.prepare("SELECT * FROM installations WHERE id=?").get(id);
+    return r ? {
+      id: String(r.id), projectId: String(r.project_id), status: r.status as Installation["status"],
+      scheduledAt: r.scheduled_at ? String(r.scheduled_at) : null,
+      completedAt: r.completed_at ? String(r.completed_at) : null,
+      notes: r.notes ? String(r.notes) : null,
+      createdAt: String(r.created_at), updatedAt: String(r.updated_at),
+    } : null;
+  }
+
   updateContractStatus(id: string, status: Contract["status"], updatedAt: string) {
     const current = this.db.prepare("SELECT * FROM contracts WHERE id=?").get(id);
     if (!current) throw new Error("CONTRACT_NOT_FOUND");
