@@ -1,0 +1,48 @@
+name: Validate SportsCam Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web-validate.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required public files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f apps/web/index.html
+          test -f apps/web/styles.css
+          test -f apps/web/app.js
+          test -f apps/web/404.html
+          test -f apps/web/robots.txt
+          test -f apps/web/sitemap.xml
+          test -f apps/web/favicon.svg
+          test -f apps/web/site.webmanifest
+          test -f apps/web/contato.html
+          test -f apps/web/privacy.html
+      - name: Validate HTML references
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'styles.css' apps/web/index.html
+          grep -q 'app.js' apps/web/index.html
+          grep -q 'favicon.svg' apps/web/index.html
+          grep -q 'site.webmanifest' apps/web/index.html
+          grep -q 'privacy.html' apps/web/index.html
+          grep -q 'sitemap.xml' apps/web/robots.txt
+      - name: Check JavaScript syntax
+        shell: bash
+        run: node --check apps/web/app.js
