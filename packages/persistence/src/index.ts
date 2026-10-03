@@ -4,3 +4,4 @@ export * from "./resolutions.js";
 export * from "./business.js";
 export * from "./migrations.js";
 export * from "./database.js";
+export * from "./media.js";
