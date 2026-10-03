@@ -33,6 +33,13 @@ export class MediaRepository {
     return { id: input.id, organizationId: input.organizationId, name: input.name, status: "offline" as const, agentVersion: input.agentVersion, token };
   }
 
+  rotateDeviceCredential(deviceId:string) {
+    const token=randomBytes(32).toString("base64url");
+    const now=new Date().toISOString();
+    this.db.prepare("UPDATE devices SET credential_hash=?,updated_at=? WHERE id=?").run(hashToken(token),now,deviceId);
+    return token;
+  }
+
   authenticateDevice(token: string) {
     if (!token) return null;
     const r = this.db.prepare("SELECT id,organization_id,name,status,agent_version FROM devices WHERE credential_hash=?").get(hashToken(token)) as Record<string, unknown> | undefined;
