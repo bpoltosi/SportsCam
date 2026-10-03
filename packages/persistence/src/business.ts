@@ -5,6 +5,12 @@ import { transitionContract, transitionInstallation, transitionProject } from ".
 export class BusinessRepository {
   constructor(private readonly db: DatabaseSync) {}
 
+  transaction<T>(work: () => T): T {
+    this.db.exec("BEGIN");
+    try { const result = work(); this.db.exec("COMMIT"); return result; }
+    catch (error) { try { this.db.exec("ROLLBACK"); } catch {} throw error; }
+  }
+
   createOrganization(o: Organization) { this.db.prepare("INSERT INTO organizations VALUES (?,?,?,?,?)").run(o.id,o.name,o.slug,o.createdAt,o.updatedAt); return o; }
   createMember(m: Member) { this.db.prepare("INSERT INTO members VALUES (?,?,?,?,?,?,?)").run(m.id,m.organizationId,m.email,m.displayName,m.role,m.createdAt,m.updatedAt); return m; }
   getMemberByEmail(email: string): Member | null { const r=this.db.prepare("SELECT id,organization_id,email,display_name,role,created_at,updated_at FROM members WHERE email=? LIMIT 1").get(email); return r?{id:String(r.id),organizationId:String(r.organization_id),email:String(r.email),displayName:String(r.display_name),role:r.role as Member["role"],createdAt:String(r.created_at),updatedAt:String(r.updated_at)}:null; }
