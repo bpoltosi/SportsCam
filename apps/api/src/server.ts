@@ -118,6 +118,8 @@ app.post("/v1/auth/login", async (request, reply) => {
 
 const DeviceRegistrationSchema = z.object({ id: z.string().min(1), name: z.string().min(1), agentVersion: z.string().min(1), hardwareProfile: z.string().nullable().optional() });
 const HeartbeatSchema = z.object({
+  deviceId: z.string().min(1),
+  sentAt: z.string().datetime(),
   status: z.enum(["online","degraded","offline","disabled"]),
   agentVersion: z.string().min(1),
   metrics: z.record(z.unknown()).optional(),
@@ -151,6 +153,7 @@ app.post("/v1/edge/devices/:deviceId/heartbeat", async (request, reply) => {
   if (deviceId !== request.device.id) return reply.code(403).send({error:"FORBIDDEN"});
   const parsed = HeartbeatSchema.safeParse(request.body);
   if (!parsed.success) return reply.code(400).send({error:"INVALID_HEARTBEAT",issues:parsed.error.issues});
+  if (parsed.data.deviceId !== deviceId) return reply.code(403).send({error:"FORBIDDEN"});
   return media.heartbeat(deviceId, parsed.data);
 });
 
