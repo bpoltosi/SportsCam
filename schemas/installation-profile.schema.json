@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/installation-profile.schema.json",
+  "title":"SportsCam Deployment Profile","type":"object","additionalProperties":false,
+  "required":["id","version","runtime","deployment","resources"],
+  "properties":{
+    "id":{"type":"string","minLength":1},"version":{"type":"string","minLength":1},
+    "runtime":{"type":"object","additionalProperties":false,"required":["os","architecture"],"properties":{"os":{"type":"string"},"architecture":{"type":"string"}}},
+    "deployment":{"type":"object","additionalProperties":false,"required":["mode"],"properties":{"mode":{"enum":["edge","server","hybrid","development"]}}},
+    "resources":{"type":"object","additionalProperties":false,"properties":{"memoryGb":{"type":"number","minimum":0},"storageGb":{"type":"number","minimum":0},"cpuCores":{"type":"number","minimum":0}}},
+    "network":{"type":"object","additionalProperties":false,"properties":{"required":{"type":"boolean"},"offlineBufferMinutes":{"type":"integer","minimum":0}}}
+  }
+}
