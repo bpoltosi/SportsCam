@@ -1,12 +1,17 @@
 export type Severity = "error" | "warning" | "info";
 
+export interface ProjectHardwareSelection {
+  id: string;
+  quantity: number;
+}
+
 export interface ProjectDefinition {
   project: {
     id: string;
     version: string;
     sport: string;
     modules: string[];
-    hardware?: Array<{ id: string; quantity: number }>;
+    hardware?: ProjectHardwareSelection[];
     profile?: string;
   };
 }
@@ -32,6 +37,7 @@ export interface Rule {
   then: {
     requiresHardwareCategory?: string;
     requiresModules?: string[];
+    requiresCapability?: { key: string; value?: unknown };
   };
   severity: Severity;
   message: string;
