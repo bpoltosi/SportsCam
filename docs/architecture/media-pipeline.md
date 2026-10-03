@@ -37,7 +37,7 @@ Minimum:
 - codec/container metadata when known.
 
 ## Event to clip
-An event references a recording and a timestamp. Clip creation resolves:
+An event references a recording and an absolute UTC timestamp in epoch milliseconds. Clip creation resolves:
 
 `start = max(recordingStart, eventTimestamp - preSeconds)`
 
