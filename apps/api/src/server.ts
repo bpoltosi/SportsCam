@@ -4,7 +4,7 @@ import cors from "@fastify/cors";
 import { z } from "zod";
 import { resolveProject } from "../../../packages/engine/src/engine.js";
 import type { EngineCatalog, ProjectDefinition } from "../../../packages/engine/src/engine.js";
-import { SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository } from "../../../packages/persistence/src/index.js";
+import { SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository, runMigrations } from "../../../packages/persistence/src/index.js";
 import { AuthService } from "../../../packages/auth/src/index.js";
 
 const app = Fastify({ logger: true });
@@ -12,6 +12,7 @@ await app.register(cors, { origin: true });
 const dbPath = process.env.DATABASE_PATH ?? "sportscam.db";
 const db = new DatabaseSync(dbPath);
 db.exec("PRAGMA foreign_keys = ON;");
+runMigrations(db);
 const projectRepository = new SQLiteProjectRepository(dbPath);
 const resolutionRepository = new SQLiteResolutionRepository(db);
 const business = new BusinessRepository(db);
