@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sportscam.local/schemas/media-upload.schema.json",
+  "title": "SportsCam Media Upload Session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "organizationId", "deviceId", "objectKey", "contentType", "expectedSize", "checksum", "status", "createdAt"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "organizationId": {"type": "string", "minLength": 1},
+    "deviceId": {"type": "string", "minLength": 1},
+    "objectKey": {"type": "string", "minLength": 1},
+    "contentType": {"type": "string", "minLength": 1},
+    "expectedSize": {"type": "integer", "minimum": 0},
+    "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "status": {"enum": ["initiated", "uploading", "completed", "aborted", "expired"]},
+    "partSize": {"type": "integer", "minimum": 1},
+    "uploadedBytes": {"type": "integer", "minimum": 0},
+    "createdAt": {"type": "string"},
+    "expiresAt": {"type": "string"}
+  }
+}
