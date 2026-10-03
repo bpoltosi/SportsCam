@@ -14,6 +14,7 @@ describe("SQLiteProjectRepository", () => {
       definitionJson: '{"project":{"id":"p1"}}',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      organizationId: null,
     };
 
     const firstDb = openDatabase(path);
