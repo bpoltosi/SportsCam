@@ -1,0 +1,1 @@
+{"id":"controller-01","kind":"serial","model":"generic-rs485","port":"/dev/ttyUSB0","baudrate":115200}
