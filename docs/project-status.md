@@ -5,13 +5,13 @@ Data: 2026-10-03
 ## Concluído nesta etapa
 
 - arquitetura sistêmica consolidada em `docs/architecture/sportscam-system.md`;
-- schemas JSON Schema para hardware, módulos, regras, BOM, deployment profile, eventos, clips e heartbeat;
+- schemas JSON Schema para hardware, módulos, regras, BOM, deployment profile, eventos, clips, heartbeat e sessões de upload;
 - contrato OpenAPI MVP em `docs/api/openapi.yaml`;
 - protocolo Edge ↔ Backend;
 - pipeline de mídia;
 - baseline de segurança;
 - observabilidade;
-- migração SQL 005 para devices, cameras, recordings, segments, media objects, events, clips e processing jobs;
+- migrações SQL 005–007 para mídia, edge, comandos e sessões de upload;
 - ADRs de fronteiras arquiteturais e hot path de vídeo;
 - CI Node além do CI Python existente;
 - supervisor de gravadores com backoff exponencial e teste automatizado;
@@ -32,52 +32,53 @@ Data: 2026-10-03
 - FFmpeg para gravação segmentada e clips;
 - testes de Engine, persistência, domínio e runtime.
 
+## Implementado no fluxo Media/Edge
+
+- persistência de devices, cameras, recordings, segments, events, clips e processing jobs;
+- emissão de credencial de dispositivo uma única vez com hash SHA-256 em repouso;
+- heartbeat autenticado por dispositivo;
+- comandos edge duráveis com pull + ACK;
+- rotação de credencial;
+- lifecycle de recording/segment;
+- ingestão de eventos com validação de tenant/projeto;
+- enqueue atômico de clip + processing job;
+- worker Python persistente com retry/dead-letter;
+- geração de clips atravessando múltiplos segmentos com FFmpeg;
+- registro de media object local com checksum SHA-256;
+- contrato `ObjectStore` provider-neutral;
+- upload multipart/resumível local como implementação de referência;
+- persistência de sessões de upload e contrato JSON Schema;
+- testes do multipart local;
+- validação dos JSON Schemas no CI Node;
+- contrato Python `EdgeClient` stdlib-only para heartbeat, pull e ACK.
+
 ## Ainda não considerado concluído
 
-1. Implementação das novas entidades de mídia/edge no repository e API.
-2. Object storage real e upload resumível.
-3. Job worker persistente para clips/processamento.
-4. Autenticação dedicada de dispositivos.
-5. Heartbeat real persistido e comandos edge.
-6. Validação automatizada de todos os JSON Schemas.
-7. Isolamento multi-tenant completo em todas as rotas.
-8. Rate limiting e hardening de autenticação.
-9. E2E real com câmera/simulador → gravação → evento → clip → painel.
-10. Frontend/painel implementado; a UX já está documentada, mas a implementação completa ainda não está fechada.
-11. Billing/entitlements reais.
-12. Deployment de produção e estratégia de atualização do edge.
+1. Adapter de object storage de produção e transporte resumível real.
+2. E2E com câmera/simulador produzindo segmentos continuamente e enviando-os ao backend.
+3. Isolamento multi-tenant completo em todas as rotas e testes negativos abrangentes.
+4. Rate limiting e hardening de autenticação.
+5. Frontend/painel implementado; a UX já está documentada, mas a implementação completa ainda não está fechada.
+6. Billing/entitlements reais.
+7. Deployment de produção e estratégia de atualização do edge.
+8. Implementação completa ONVIF SOAP/WS-Discovery.
 
 ## Bloqueios reais restantes
 
 Não há bloqueio para continuar a implementação local/estrutural.
 
-As decisões de infraestrutura ainda abertas (object storage, provedor de auth, mecanismo de jobs e deployment final) podem ser isoladas por interfaces e não devem bloquear o desenvolvimento do domínio.
+As decisões de infraestrutura ainda abertas podem ser isoladas por interfaces e não devem bloquear o domínio.
 
-O principal bloqueio para declarar o MVP operacional é a integração E2E com um fluxo de mídia persistente e um dispositivo/simulador real.
+O principal bloqueio para declarar o MVP operacional continua sendo o E2E persistente: dispositivo/simulador → segmentos → upload → backend → evento → clip → media object → painel.
 
+### Observação sobre ONVIF
 
-## Media/Edge implementation update — 2026-10-03
+O adapter ONVIF existente permanece deliberadamente conservador. A implementação completa de SOAP/WS-Discovery não foi aplicada nesta execução porque o mecanismo de alteração do repositório bloqueou esse trecho de código de rede. Isso não bloqueia o restante da arquitetura, pois o protocolo está isolado atrás do contrato de Device.
 
-Implemented in repository:
-- persistent media/edge repository for devices, recordings, segments, events, clips and processing jobs;
-- one-time device credential issuance with SHA-256-at-rest credential storage;
-- device-authenticated heartbeat path separated from human session authentication;
-- recording and segment lifecycle API;
-- event ingestion and tenant/project ownership checks;
-- clip enqueue API that creates a persistent processing job atomically;
-- Python persistent clip worker with retry/dead-letter behavior;
-- clip generation spanning multiple recording segments using FFmpeg concat + stream copy;
-- local media-object registration with SHA-256 checksum;
-- JSON Schema compilation validation in the Node CI check;
-- persistence tests for device authentication and atomic clip enqueue.
+### Próximo bloco recomendado
 
-The remaining production boundary is object-storage/resumable-upload integration and a real/simulated edge agent that continuously uploads segment metadata/files. The clip worker intentionally uses a local filesystem media root so the storage provider can be replaced without changing the processing contract.
-
-
-### Latest runtime hardening
-- durable device command queue + ACK lifecycle;
-- device credential rotation;
-- project camera persistence/API;
-- standardized runtime Device capability contract;
-- deterministic DeviceHealthMonitor;
-- ONVIF remains the next hardware-protocol boundary: the existing adapter is intentionally conservative and the full SOAP/WS-Discovery implementation could not be safely applied through the repository tool in this execution environment.
+- transformar o contrato de upload em endpoints backend;
+- adicionar simulador de câmera/edge que gera segmentos determinísticos;
+- conectar esse simulador ao lifecycle de recording/segment;
+- fechar E2E automatizado com storage local;
+- depois substituir somente o adapter de storage por S3-compatible/object storage.
