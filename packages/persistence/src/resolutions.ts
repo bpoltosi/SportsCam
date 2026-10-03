@@ -10,20 +10,7 @@ export interface ResolutionRecord {
 }
 
 export class SQLiteResolutionRepository {
-  constructor(private readonly db: DatabaseSync) {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS resolutions (
-        id TEXT PRIMARY KEY,
-        project_id TEXT NOT NULL,
-        engine_version TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        input_json TEXT NOT NULL,
-        result_json TEXT NOT NULL,
-        FOREIGN KEY(project_id) REFERENCES projects(id)
-      );
-      CREATE INDEX IF NOT EXISTS idx_resolutions_project ON resolutions(project_id, created_at);
-    `);
-  }
+  constructor(private readonly db: DatabaseSync) {}
 
   save(record: ResolutionRecord): void {
     this.db.prepare(
@@ -34,7 +21,7 @@ export class SQLiteResolutionRepository {
   listByProject(projectId: string): ResolutionRecord[] {
     return this.db.prepare(
       "SELECT id, project_id, engine_version, created_at, input_json, result_json FROM resolutions WHERE project_id = ? ORDER BY created_at DESC",
-    ).all().map(row => ({
+    ).all(projectId).map(row => ({
       id: String(row.id),
       projectId: String(row.project_id),
       engineVersion: String(row.engine_version),
