@@ -75,7 +75,7 @@ class ClipWorker:
             if not recording:
                 raise RuntimeError("RECORDING_NOT_FOUND")
 
-            event_at = parse_iso(recording["started_at"]).timestamp() + (int(event["timestamp_ms"]) / 1000.0)
+            event_at = int(event["timestamp_ms"]) / 1000.0
             clip_start = event_at - float(clip["pre_seconds"])
             clip_end = event_at + float(clip["post_seconds"])
             segments = db.execute(
