@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/rule.schema.json",
+  "title":"SportsCam Rule","type":"object","additionalProperties":false,
+  "required":["id","when","then","severity","message"],
+  "properties":{
+    "id":{"type":"string","minLength":1},
+    "when":{"type":"object","additionalProperties":false,"properties":{"module":{"type":"string"},"sport":{"type":"string"}}},
+    "then":{"type":"object","additionalProperties":false,"properties":{"requiresHardwareCategory":{"type":"string"},"requiresModules":{"type":"array","items":{"type":"string"}},"requiresCapability":{"type":"object","additionalProperties":false,"required":["key"],"properties":{"key":{"type":"string"},"value":{}}}}},
+    "severity":{"enum":["error","warning","info"]},"message":{"type":"string","minLength":1}
+  }
+}
