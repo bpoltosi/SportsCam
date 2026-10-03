@@ -9,7 +9,7 @@
   <meta property="og:title" content="SportsCam — Vídeo esportivo, rede e tecnologia">
   <meta property="og:description" content="Câmeras, rede, gravação, replay e software em uma arquitetura integrada.">
   <meta property="og:url" content="https://sportscam.com.br/">
-  <link rel="canonical" href="https://sportscam.com.br/">
+  <link rel="canonical" href="https://sportscam.com.br/"><link rel="icon" href="./favicon.svg"><link rel="manifest" href="./site.webmanifest">
   <title>SportsCam — Vídeo esportivo, rede e tecnologia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
       <span class="brand-mark"><i></i><i></i><i></i></span>
       <span>SPORTSCAM</span>
     </a>
-    <nav class="nav" aria-label="Navegação principal">
+    <button class="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button><nav id="main-nav" class="nav" aria-label="Navegação principal">
       <a href="#solucoes">Soluções</a>
       <a href="#tecnologia">Tecnologia</a>
       <a href="#processo">Como funciona</a>
@@ -32,7 +32,7 @@
     <a class="button button-small button-dark" href="#contato">Falar com especialista <span>↗</span></a>
   </header>
 
-  <main id="top">
+  <a class="skip-link" href="#main-content">Pular para o conteúdo</a><main id="top"><div id="main-content" tabindex="-1">
     <section class="hero section">
       <div class="hero-copy">
         <div class="eyebrow"><span class="pulse"></span> Câmeras + rede + software</div>
@@ -186,13 +186,28 @@
         </form>
       </div>
     </section>
-  </main>
+  </div></main>
 
   <footer class="footer">
     <div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>SPORTSCAM</span></div>
     <span>Vídeo esportivo · Câmeras · Rede · Software</span>
-    <span>© 2026 SportsCam</span>
+    <span><a href="./privacy.html">Privacidade</a></span><span>© 2026 SportsCam</span>
   </footer>
+  
+  <script>
+    const menuButton = document.querySelector(".mobile-menu-toggle");
+    const mainNav = document.getElementById("main-nav");
+    if (menuButton && mainNav) {
+      menuButton.addEventListener("click", () => {
+        const open = mainNav.classList.toggle("mobile-open");
+        menuButton.setAttribute("aria-expanded", String(open));
+      });
+      mainNav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
+        mainNav.classList.remove("mobile-open");
+        menuButton.setAttribute("aria-expanded", "false");
+      }));
+    }
+  </script>
   <script src="./app.js"></script>
 </body>
 </html>
