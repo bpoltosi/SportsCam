@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/camera.schema.json",
+  "title":"SportsCam Camera",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["id","name","status"],
+  "properties":{
+    "id":{"type":"string"},
+    "deviceId":{"type":["string","null"]},
+    "projectId":{"type":["string","null"]},
+    "name":{"type":"string"},
+    "catalogHardwareId":{"type":["string","null"]},
+    "status":{"enum":["online","degraded","offline","disabled"]},
+    "configuration":{"type":"object"}
+  }
+}
