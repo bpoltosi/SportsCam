@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sportscam-runtime"
+version = "0.1.0"
+description = "SportsCam hardware and media runtime"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+uvc = ["opencv-python>=4.9"]
+serial = ["pyserial>=3.5"]
+gpio = ["gpiozero>=2.0"]
+onvif = ["requests>=2.31"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sportscam-runtime = "sportscam_runtime.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
