@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/event.schema.json",
+  "title":"SportsCam Event","type":"object","additionalProperties":false,
+  "required":["id","projectId","timestampMs","type","source"],
+  "properties":{"id":{"type":"string"},"projectId":{"type":"string"},"recordingId":{"type":"string"},"timestampMs":{"type":"integer","minimum":0},"type":{"type":"string","minLength":1},"source":{"enum":["manual","sensor","integration","algorithm","ai"]},"metadata":{"type":"object"}}
+}
