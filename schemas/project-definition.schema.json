@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sportscam.local/schemas/project-definition.schema.json",
+  "title": "SportsCam ProjectDefinition",
+  "type": "object",
+  "required": ["project"],
+  "additionalProperties": false,
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["id", "version", "sport", "modules"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type":"string","minLength":1},
+        "version": {"type":"string","minLength":1},
+        "sport": {"type":"string","minLength":1},
+        "modules": {"type":"array","items":{"type":"string","minLength":1}},
+        "hardware": {
+          "type":"array",
+          "items": {
+            "type":"object",
+            "required":["id","quantity"],
+            "additionalProperties":false,
+            "properties":{
+              "id":{"type":"string","minLength":1},
+              "quantity":{"type":"integer","minimum":1}
+            }
+          }
+        },
+        "profile":{"type":"string","minLength":1}
+      }
+    }
+  }
+}

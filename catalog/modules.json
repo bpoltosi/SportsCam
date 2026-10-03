@@ -1,0 +1,10 @@
+{
+  "catalog_version": "0.1.0",
+  "modules": [
+    {"id":"camera_capture","version":"1.0.0","provides":["video_input"]},
+    {"id":"video_recording","version":"1.0.0","requires":["camera_capture"],"provides":["recorded_video"]},
+    {"id":"storage","version":"1.0.0","provides":["persistent_storage"]},
+    {"id":"instant_replay","version":"1.0.0","requires":["camera_capture","video_recording","storage"],"provides":["replay_buffer","replay_control"]},
+    {"id":"operator_ui","version":"1.0.0","requires":["instant_replay"],"provides":["operator_control"]}
+  ]
+}
