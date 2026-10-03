@@ -2,11 +2,11 @@
   "catalog_version": "0.1.0",
   "rules": [
     {
-      "id": "replay-requires-storage",
+      "id": "replay-requires-storage-module",
       "when": {"module":"instant_replay"},
-      "then": {"requiresHardwareCategory":"storage"},
+      "then": {"requiresModules":["storage"]},
       "severity":"error",
-      "message":"instant_replay requires a storage-capable hardware entry in the catalog."
+      "message":"instant_replay requires the storage module."
     }
   ]
 }
