@@ -57,6 +57,7 @@ const now = () => new Date().toISOString();
 declare module "fastify" {
   interface FastifyRequest {
     user?: ReturnType<AuthService["authenticate"]>;
+    device?: ReturnType<MediaRepository["authenticateDevice"]>;
   }
 }
 
