@@ -610,3 +610,183 @@ Este documento é a referência arquitetural canônica para o `SportsCam Engine`
 Documentos anteriores que tratavam o Engine como sistema de instalação, dimensionamento físico, planejamento de quadras, posicionamento de câmeras ou geração de instruções de instalação não fazem mais parte da arquitetura vigente.
 
 Quando houver conflito, esta definição prevalece até que uma nova decisão arquitetural seja registrada explicitamente.
+
+
+## 22. Contrato técnico de hardware e catálogo de referências
+
+O catálogo de hardware deve separar claramente **requisito técnico** de **produto concreto**.
+
+### 22.1 Contrato técnico
+
+O contrato responde:
+
+> O que o projeto exige?
+
+Ele define um piso de capacidades, não um modelo comercial específico.
+
+Exemplo inicial para câmera: `CAMERA_BASE_V1`
+
+- resolução mínima: 1920x1080;
+- taxa mínima: 30 FPS;
+- transporte: rede/IP ou tecnologia wireless equivalente;
+- alimentação externa;
+- armazenamento interno não requerido;
+- PTZ/rotação não requerido;
+- microfone não requerido;
+- bateria não requerida;
+- gravação local não requerida;
+- uso anunciado pelo fabricante não é critério de compatibilidade.
+
+HDMI e USB não fazem parte da arquitetura primária para transporte de vídeo de longa distância.
+
+### 22.2 Variantes de capacidade
+
+O contrato pode possuir variantes para diferentes níveis de capacidade, sem transformar cada variante em um produto:
+
+- 1080p30;
+- 1080p60;
+- 1080p30/60 com PoE;
+- 2K30;
+- 2K60;
+- 4K30;
+- outras variantes futuras.
+
+Uma capacidade superior pode satisfazer uma exigência inferior quando todas as demais restrições forem atendidas.
+
+O Engine deve retornar **opções compatíveis**, não um "melhor produto" implícito. A escolha entre alternativas pode ser feita pela configuração do projeto ou pelo usuário.
+
+### 22.3 Hardware concreto
+
+O hardware concreto é um registro de catálogo que informa quais capacidades um produto realmente possui.
+
+Modelo conceitual mínimo:
+
+```yaml
+hardware:
+  id: CAM-001
+  category: camera
+  model: example-model
+
+  capabilities:
+    resolution:
+      width: 1920
+      height: 1080
+    fps:
+      max: 30
+    transmission:
+      - wifi
+    power:
+      - external
+
+  compatibility:
+    protocols:
+      - rtsp
+
+  reference_price:
+    value: 185.00
+    currency: BRL
+    reference_date: 2026-10-03
+
+  purchase_reference:
+    source: aliexpress
+    url: https://example.invalid/product
+```
+
+Os campos exatos serão formalizados no schema de Hardware. O exemplo é conceitual.
+
+### 22.4 Preço de referência
+
+Preço é metadado do catálogo, não parte do contrato técnico.
+
+Para o MVP:
+
+- AliExpress é a fonte de referência prioritária para pesquisa;
+- o custo efetivamente verificado pode considerar frete e tributos no momento da pesquisa;
+- o valor verificado é então armazenado como **preço de referência estático**;
+- a data da referência deve ser registrada;
+- o link de compra/referência deve ser registrado.
+
+O sistema **não** deve implementar:
+
+- cálculo dinâmico de frete;
+- cálculo de impostos;
+- simulador de importação;
+- câmbio em tempo real;
+- histórico automático de preços;
+- monitoramento de anúncios;
+- APIs de preço de fornecedores.
+
+Esses processos pertencem à pesquisa/manutenção do catálogo, não ao Engine.
+
+### 22.5 Modelo de resolução
+
+A resolução de hardware segue:
+
+```
+ProjectDefinition
+      |
+      v
+Technical Contract
+      |
+      v
+Capability Requirements
+      |
+      v
+Hardware Catalog
+      |
+      v
+Compatible Hardware
+      |
+      v
+Project Configuration
+      |
+      v
+BOM + reference costs
+```
+
+A responsabilidade de cada camada é:
+
+- **Contract:** define o que é necessário;
+- **Catalog:** registra produtos e capacidades verificadas;
+- **Engine:** verifica compatibilidade de forma determinística;
+- **Project Configuration:** registra quais opções foram escolhidas e quantidades;
+- **BOM:** consolida os recursos derivados.
+
+O catálogo não deve exigir um inventário físico detalhado de cada unidade instalada. O sistema trabalha com perfis/capacidades de hardware e referências de produtos.
+
+### 22.6 Famílias iniciais
+
+O mesmo princípio de contrato + variante + catálogo deve ser aplicado às demais famílias:
+
+- câmera;
+- rede (Ethernet, PoE, Wi-Fi e wireless/IP);
+- alimentação;
+- cabos;
+- antenas/rádio;
+- processamento;
+- armazenamento.
+
+Cada família deve expor somente as capacidades relevantes para as regras do Engine.
+
+### 22.7 Decisão arquitetural
+
+A arquitetura oficial passa a considerar:
+
+```
+CONTRACT
+  = requisito/capability floor
+
+HARDWARE CATALOG
+  = produto concreto + capabilities + referência de preço/link
+
+ENGINE
+  = compatibilidade e resolução determinística
+
+PROJECT CONFIGURATION
+  = seleção + quantidade
+
+BOM
+  = resultado derivado
+```
+
+Não será criado um motor de compras ou de preços em tempo real.
