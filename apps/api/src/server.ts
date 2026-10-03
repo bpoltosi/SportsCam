@@ -1,19 +1,16 @@
-import { DatabaseSync } from "node:sqlite";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { z } from "zod";
 import { resolveProject } from "../../../packages/engine/src/engine.js";
 import type { EngineCatalog, ProjectDefinition } from "../../../packages/engine/src/engine.js";
-import { SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository, runMigrations } from "../../../packages/persistence/src/index.js";
+import { openDatabase, SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository } from "../../../packages/persistence/src/index.js";
 import { AuthService } from "../../../packages/auth/src/index.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
 const dbPath = process.env.DATABASE_PATH ?? "sportscam.db";
-const db = new DatabaseSync(dbPath);
-db.exec("PRAGMA foreign_keys = ON;");
-runMigrations(db);
-const projectRepository = new SQLiteProjectRepository(dbPath);
+const db = openDatabase(dbPath);
+const projectRepository = new SQLiteProjectRepository(db);
 const resolutionRepository = new SQLiteResolutionRepository(db);
 const business = new BusinessRepository(db);
 const auth = new AuthService(db);
@@ -57,7 +54,7 @@ app.addHook("preHandler", async (request, reply) => {
   if (!token || !auth.authenticate(token)) return reply.code(401).send({error:"UNAUTHORIZED"});
 });
 
-app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.1.0" }));
+app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.2.0" }));
 app.post("/v1/auth/register", async (request, reply) => {
   const parsed=RegisterSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_REGISTRATION",issues:parsed.error.issues});
   const timestamp=now(), organization={id:crypto.randomUUID(),name:parsed.data.organizationName,slug:parsed.data.slug,createdAt:timestamp,updatedAt:timestamp};
@@ -160,3 +157,8 @@ app.get("/v1/business-projects/:projectId/hardware", async request => business.l
 app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 
 await app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
+
+
+const shutdown = async () => { db.close(); await app.close(); };
+process.once("SIGINT", () => void shutdown());
+process.once("SIGTERM", () => void shutdown());
