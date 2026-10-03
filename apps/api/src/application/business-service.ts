@@ -109,8 +109,7 @@ export class BusinessService {
   }
 
   updateContractStatus(id: string, status: Contract["status"], actorMemberId: string): Contract {
-    const contracts = this.repository.listContracts(this.requireContractProject(id));
-    const current = contracts.find(contract => contract.id === id);
+    const current = this.repository.getContract(id);
     if (!current) throw new AppError("NOT_FOUND", 404, "CONTRACT_NOT_FOUND");
     const project = this.repository.getProject(current.projectId)!;
     return this.repository.transaction(() => {
@@ -128,8 +127,7 @@ export class BusinessService {
   }
 
   updateInstallationStatus(id: string, status: Installation["status"], actorMemberId: string): Installation {
-    const installations = this.repository.listInstallations(this.requireInstallationProject(id));
-    const current = installations.find(installation => installation.id === id);
+    const current = this.repository.getInstallation(id);
     if (!current) throw new AppError("NOT_FOUND", 404, "INSTALLATION_NOT_FOUND");
     const project = this.repository.getProject(current.projectId)!;
     return this.repository.transaction(() => {
@@ -144,18 +142,6 @@ export class BusinessService {
       });
       return updated;
     });
-  }
-
-  private requireContractProject(id: string): string {
-    const row = this.repository.listContractsForResource(id);
-    if (!row) throw new AppError("NOT_FOUND", 404, "CONTRACT_NOT_FOUND");
-    return row.projectId;
-  }
-
-  private requireInstallationProject(id: string): string {
-    const row = this.repository.listInstallationsForResource(id);
-    if (!row) throw new AppError("NOT_FOUND", 404, "INSTALLATION_NOT_FOUND");
-    return row.projectId;
   }
 
   private requireProjectOrganization(projectId: string): string {
