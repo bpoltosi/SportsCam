@@ -47,11 +47,35 @@ async function loadCatalog(): Promise<EngineCatalog> {
   return { modules: modules.modules, rules: rules.rules, hardware: cameras.items };
 }
 const now = () => new Date().toISOString();
+
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: ReturnType<AuthService["authenticate"]>;
+  }
+}
+
 app.addHook("preHandler", async (request, reply) => {
   if (request.url === "/health" || request.url.startsWith("/v1/auth/")) return;
-  const header=request.headers.authorization;
-  const token=header?.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token || !auth.authenticate(token)) return reply.code(401).send({error:"UNAUTHORIZED"});
+
+  const header = request.headers.authorization;
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  const user = token ? auth.authenticate(token) : null;
+  if (!user) return reply.code(401).send({ error: "UNAUTHORIZED" });
+  request.user = user;
+
+  const params = request.params as Record<string, unknown>;
+  const orgId = typeof params.orgId === "string" ? params.orgId : null;
+  if (orgId && orgId !== user.organizationId) {
+    return reply.code(403).send({ error: "FORBIDDEN" });
+  }
+
+  const projectId = typeof params.projectId === "string" ? params.projectId : null;
+  if (projectId) {
+    const project = business.getProject(projectId);
+    if (project && project.organizationId !== user.organizationId) {
+      return reply.code(403).send({ error: "FORBIDDEN" });
+    }
+  }
 });
 
 app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.2.0" }));
