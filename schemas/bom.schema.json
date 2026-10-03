@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/bom.schema.json",
+  "title":"SportsCam BOM","type":"object","additionalProperties":false,
+  "required":["items"],
+  "properties":{"items":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["hardwareId","quantity","source"],"properties":{"hardwareId":{"type":"string"},"quantity":{"type":"integer","minimum":1},"source":{"type":"object","additionalProperties":false,"required":["type"],"properties":{"type":{"enum":["project","module_dependency","rule"]},"module":{"type":"string"},"rule":{"type":"string"}}}}}}}
+}
