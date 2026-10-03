@@ -133,6 +133,8 @@ const EventSchema = z.object({
   metadata: z.record(z.unknown()).default({}),
 });
 const ClipSchema = z.object({ id: z.string().min(1), eventId: z.string().min(1), projectId: z.string().nullable().optional(), preSeconds: z.number().min(0).max(300), postSeconds: z.number().min(0).max(300), sourceRevision: z.number().int().positive().default(1) });
+const RecordingSchema = z.object({ id:z.string().min(1), cameraId:z.string().nullable().optional(), status:z.enum(["starting","recording","stopping","complete","failed"]), startedAt:z.string().datetime(), endedAt:z.string().datetime().nullable().optional(), sourceRevision:z.number().int().positive().default(1) });
+const SegmentSchema = z.object({ id:z.string().min(1), sequence:z.number().int().nonnegative(), startedAt:z.string().datetime(), durationMs:z.number().int().positive(), localPath:z.string().nullable().optional(), objectKey:z.string().nullable().optional(), byteSize:z.number().int().nonnegative().nullable().optional(), checksum:z.string().nullable().optional() });
 
 app.post("/v1/edge/devices/register", async (request, reply) => {
   const parsed = DeviceRegistrationSchema.safeParse(request.body);
@@ -153,6 +155,35 @@ app.post("/v1/edge/devices/:deviceId/heartbeat", async (request, reply) => {
 });
 
 app.get("/v1/edge/devices", async request => media.listDevices(request.user!.organizationId));
+app.get("/v1/projects/:projectId/recordings", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  return media.listRecordings(projectId);
+});
+app.post("/v1/projects/:projectId/recordings", async (request, reply) => {
+  const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
+  const project=business.getProject(projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
+  const parsed=RecordingSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_RECORDING",issues:parsed.error.issues});
+  return reply.code(201).send(media.createRecording({id:parsed.data.id,organizationId:request.user!.organizationId,projectId,cameraId:parsed.data.cameraId,status:parsed.data.status,startedAt:parsed.data.startedAt,endedAt:parsed.data.endedAt??null,sourceRevision:parsed.data.sourceRevision}));
+});
+app.get("/v1/recordings/:recordingId/segments", async (request, reply) => {
+  const {recordingId}=z.object({recordingId:z.string().min(1)}).parse(request.params);
+  const recording=media.getRecording(recordingId);
+  if (!recording || String(recording.organization_id) !== request.user!.organizationId) return reply.code(404).send({error:"RECORDING_NOT_FOUND"});
+  return media.listSegments(recordingId);
+});
+app.post("/v1/recordings/:recordingId/segments", async (request, reply) => {
+  const {recordingId}=z.object({recordingId:z.string().min(1)}).parse(request.params);
+  const recording=media.getRecording(recordingId);
+  if (!recording || String(recording.organization_id) !== request.user!.organizationId) return reply.code(404).send({error:"RECORDING_NOT_FOUND"});
+  const parsed=SegmentSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({error:"INVALID_SEGMENT",issues:parsed.error.issues});
+  return reply.code(201).send(media.createSegment({id:parsed.data.id,recordingId,sequence:parsed.data.sequence,startedAt:parsed.data.startedAt,durationMs:parsed.data.durationMs,localPath:parsed.data.localPath,objectKey:parsed.data.objectKey,byteSize:parsed.data.byteSize,checksum:parsed.data.checksum}));
+});
+
 app.get("/v1/projects/:projectId/events", async (request, reply) => {
   const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params);
   const project=business.getProject(projectId);
@@ -179,8 +210,10 @@ app.post("/v1/projects/:projectId/clips", async (request, reply) => {
   if (!project || project.organizationId !== request.user!.organizationId) return reply.code(404).send({error:"PROJECT_NOT_FOUND"});
   const parsed=ClipSchema.safeParse(request.body);
   if (!parsed.success) return reply.code(400).send({error:"INVALID_CLIP",issues:parsed.error.issues});
-  const event=media.getClip(parsed.data.id);
-  if (event) return reply.code(409).send({error:"CLIP_ALREADY_EXISTS"});
+  const event=media.getEvent(parsed.data.eventId) as Record<string,unknown> | undefined;
+  if (!event || String(event.organization_id) !== request.user!.organizationId || String(event.project_id) !== projectId) return reply.code(404).send({error:"EVENT_NOT_FOUND"});
+  const existing=media.getClip(parsed.data.id);
+  if (existing) return reply.code(409).send({error:"CLIP_ALREADY_EXISTS"});
   try {
     return reply.code(202).send(media.enqueueClip({id:parsed.data.id,organizationId:request.user!.organizationId,projectId,eventId:parsed.data.eventId,preSeconds:parsed.data.preSeconds,postSeconds:parsed.data.postSeconds,sourceRevision:parsed.data.sourceRevision}));
   } catch { return reply.code(409).send({error:"CLIP_ENQUEUE_FAILED"}); }
