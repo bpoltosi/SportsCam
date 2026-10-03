@@ -5,6 +5,7 @@ import { z } from "zod";
 import { resolveProject } from "../../../packages/engine/src/engine.js";
 import type { EngineCatalog, ProjectDefinition } from "../../../packages/engine/src/engine.js";
 import { SQLiteProjectRepository, SQLiteResolutionRepository, BusinessRepository } from "../../../packages/persistence/src/index.js";
+import { AuthService } from "../../../packages/auth/src/index.js";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
@@ -14,6 +15,7 @@ db.exec("PRAGMA foreign_keys = ON;");
 const projectRepository = new SQLiteProjectRepository(dbPath);
 const resolutionRepository = new SQLiteResolutionRepository(db);
 const business = new BusinessRepository(db);
+const auth = new AuthService(db);
 
 const ProjectSchema = z.object({ project: z.object({
   id: z.string().min(1), version: z.string().min(1), sport: z.string().min(1),
@@ -22,6 +24,8 @@ const ProjectSchema = z.object({ project: z.object({
   profile: z.string().optional(),
 }) });
 const OrganizationSchema = z.object({ name: z.string().min(1), slug: z.string().regex(/^[a-z0-9-]+$/) });
+const RegisterSchema = z.object({ organizationName:z.string().min(1), slug:z.string().regex(/^[a-z0-9-]+$/), email:z.string().email(), displayName:z.string().min(1), password:z.string().min(12) });
+const LoginSchema = z.object({ email:z.string().email(), password:z.string().min(1) });
 const MemberSchema = z.object({ email: z.string().email(), displayName: z.string().min(1), role: z.enum(["owner","admin","manager","operator","viewer"]) });
 const BusinessProjectSchema = z.object({ name: z.string().min(1), sport: z.string().min(1) });
 const ContractSchema = z.object({ number: z.string().min(1), currency: z.string().length(3), totalCents: z.number().int().nonnegative(), validUntil: z.string().datetime().nullable().optional() });
@@ -45,8 +49,32 @@ async function loadCatalog(): Promise<EngineCatalog> {
   return { modules: modules.modules, rules: rules.rules, hardware: cameras.items };
 }
 const now = () => new Date().toISOString();
+app.addHook("preHandler", async (request, reply) => {
+  if (request.url === "/health" || request.url.startsWith("/v1/auth/")) return;
+  const header=request.headers.authorization;
+  const token=header?.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token || !auth.authenticate(token)) return reply.code(401).send({error:"UNAUTHORIZED"});
+});
 
 app.get("/health", async () => ({ status: "ok", service: "sportscam-api", engine: "0.1.0" }));
+app.post("/v1/auth/register", async (request, reply) => {
+  const parsed=RegisterSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_REGISTRATION",issues:parsed.error.issues});
+  const timestamp=now(), organization={id:crypto.randomUUID(),name:parsed.data.organizationName,slug:parsed.data.slug,createdAt:timestamp,updatedAt:timestamp};
+  try {
+    business.createOrganization(organization);
+    const member=business.createMember({id:crypto.randomUUID(),organizationId:organization.id,email:parsed.data.email,displayName:parsed.data.displayName,role:"owner",createdAt:timestamp,updatedAt:timestamp});
+    auth.setPassword(member.id,parsed.data.password);
+    const session=auth.createSession(member.id);
+    return reply.code(201).send({organization,member,session});
+  } catch(e) { return reply.code(409).send({error:"REGISTRATION_FAILED"}); }
+});
+app.post("/v1/auth/login", async (request, reply) => {
+  const parsed=LoginSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_LOGIN"});
+  const member=business.listMembersByEmail?.(parsed.data.email);
+  if(!member || !auth.verifyPassword(member.id,parsed.data.password)) return reply.code(401).send({error:"INVALID_CREDENTIALS"});
+  return {session:auth.createSession(member.id),member};
+});
+
 app.get("/v1/projects", async () => projectRepository.list());
 app.get("/v1/projects/:id", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
