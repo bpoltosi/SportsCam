@@ -229,9 +229,16 @@ app.get("/v1/business-projects/:projectId/hardware", async request => business.l
 app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 
 app.setErrorHandler((error, request, reply) => {
+  if (error instanceof z.ZodError) {
+    return reply.code(400).send({ error: "VALIDATION_ERROR", issues: error.issues });
+  }
   const normalized = toAppError(error);
   request.log.error({ err: error, code: normalized.code }, "request failed");
-  return reply.code(normalized.statusCode).send({ error: normalized.code, message: normalized.message, details: normalized.details });
+  return reply.code(normalized.statusCode).send({
+    error: normalized.code,
+    message: normalized.message,
+    details: normalized.details,
+  });
 });
 
 await app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
