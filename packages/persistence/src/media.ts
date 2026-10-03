@@ -35,6 +35,26 @@ export class MediaRepository {
     return this.db.prepare("SELECT id,name,status,agent_version,hardware_profile,last_heartbeat_at,created_at,updated_at FROM devices WHERE organization_id=? ORDER BY created_at").all(orgId);
   }
 
+  createRecording(input: { id:string; organizationId:string; projectId?:string|null; cameraId?:string|null; status:"starting"|"recording"|"stopping"|"complete"|"failed"; startedAt:string; endedAt?:string|null; sourceRevision?:number }) {
+    const now = new Date().toISOString();
+    this.db.prepare("INSERT INTO recordings(id,organization_id,project_id,camera_id,status,started_at,ended_at,source_revision,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+      .run(input.id,input.organizationId,input.projectId??null,input.cameraId??null,input.status,input.startedAt,input.endedAt??null,input.sourceRevision??1,now,now);
+    return this.getRecording(input.id);
+  }
+
+  getRecording(id:string) { return this.db.prepare("SELECT * FROM recordings WHERE id=?").get(id); }
+  listRecordings(projectId:string) { return this.db.prepare("SELECT * FROM recordings WHERE project_id=? ORDER BY started_at DESC").all(projectId); }
+
+  createSegment(input: { id:string; recordingId:string; sequence:number; startedAt:string; durationMs:number; localPath?:string|null; objectKey?:string|null; byteSize?:number|null; checksum?:string|null }) {
+    const createdAt = new Date().toISOString();
+    this.db.prepare("INSERT INTO recording_segments(id,recording_id,sequence,started_at,duration_ms,local_path,object_key,byte_size,checksum,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+      .run(input.id,input.recordingId,input.sequence,input.startedAt,input.durationMs,input.localPath??null,input.objectKey??null,input.byteSize??null,input.checksum??null,createdAt);
+    return this.db.prepare("SELECT * FROM recording_segments WHERE id=?").get(input.id);
+  }
+
+  listSegments(recordingId:string) { return this.db.prepare("SELECT * FROM recording_segments WHERE recording_id=? ORDER BY sequence").all(recordingId); }
+  getEvent(id:string) { return this.db.prepare("SELECT * FROM events WHERE id=?").get(id); }
+
   createEvent(input: { id:string; organizationId:string; projectId?:string|null; recordingId?:string|null; timestampMs:number; type:string; source:string; metadataJson:string }) {
     const createdAt = new Date().toISOString();
     this.db.prepare("INSERT INTO events(id,organization_id,project_id,recording_id,timestamp_ms,type,source,metadata_json,created_at) VALUES (?,?,?,?,?,?,?,?,?)")
