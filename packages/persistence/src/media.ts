@@ -35,6 +35,34 @@ export class MediaRepository {
     return this.db.prepare("SELECT id,name,status,agent_version,hardware_profile,last_heartbeat_at,created_at,updated_at FROM devices WHERE organization_id=? ORDER BY created_at").all(orgId);
   }
 
+  enqueueDeviceCommand(input:{id:string;organizationId:string;deviceId:string;type:string;payload:Record<string,unknown>}) {
+    const now=new Date().toISOString();
+    this.db.prepare("INSERT INTO device_commands(id,organization_id,device_id,type,payload_json,status,created_at) VALUES (?,?,?,?,?,?,?)")
+      .run(input.id,input.organizationId,input.deviceId,input.type,JSON.stringify(input.payload),"queued",now);
+    return this.getDeviceCommand(input.id);
+  }
+
+  pullDeviceCommands(deviceId:string, limit=20) {
+    const safeLimit=Math.max(1,Math.min(100,Math.trunc(limit)));
+    const now=new Date().toISOString();
+    const commands=this.db.prepare("SELECT * FROM device_commands WHERE device_id=? AND status='queued' ORDER BY created_at LIMIT ?").all(deviceId,safeLimit);
+    if(commands.length) {
+      const update=this.db.prepare("UPDATE device_commands SET status='delivered',delivered_at=? WHERE id=? AND status='queued'");
+      for(const command of commands) update.run(now,String(command.id));
+    }
+    return commands.map(command=>({...command,status:"delivered",delivered_at:now}));
+  }
+
+  acknowledgeDeviceCommand(id:string, deviceId:string, success:boolean, errorMessage?:string|null) {
+    const now=new Date().toISOString();
+    const status=success?"acknowledged":"failed";
+    this.db.prepare("UPDATE device_commands SET status=?,acknowledged_at=?,error_message=? WHERE id=? AND device_id=? AND status='delivered'")
+      .run(status,now,errorMessage??null,id,deviceId);
+    return this.getDeviceCommand(id);
+  }
+
+  getDeviceCommand(id:string) { return this.db.prepare("SELECT * FROM device_commands WHERE id=?").get(id); }
+
   createRecording(input: { id:string; organizationId:string; projectId?:string|null; cameraId?:string|null; status:"starting"|"recording"|"stopping"|"complete"|"failed"; startedAt:string; endedAt?:string|null; sourceRevision?:number }) {
     const now = new Date().toISOString();
     this.db.prepare("INSERT INTO recordings(id,organization_id,project_id,camera_id,status,started_at,ended_at,source_revision,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
