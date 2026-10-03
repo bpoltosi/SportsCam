@@ -55,7 +55,7 @@ Data: 2026-10-03
 ## Ainda não considerado concluído
 
 1. Adapter de object storage de produção e transporte resumível real.
-2. E2E com câmera/simulador produzindo segmentos continuamente e enviando-os ao backend.
+2. E2E com o simulador produzindo segmentos e executando o ciclo completo de upload/registro no backend.
 3. Isolamento multi-tenant completo em todas as rotas e testes negativos abrangentes.
 4. Rate limiting e hardening de autenticação.
 5. Frontend/painel implementado; a UX já está documentada, mas a implementação completa ainda não está fechada.
