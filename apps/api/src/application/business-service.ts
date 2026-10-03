@@ -13,6 +13,7 @@ export class BusinessService {
 
   createProject(project: BusinessProject, actorMemberId: string): BusinessProject {
     try {
+      return this.repository.transaction(() => {
       const created = this.repository.createProject(project);
       writeAudit(this.repository, {
         organizationId: project.organizationId,
@@ -23,6 +24,7 @@ export class BusinessService {
         metadataJson: JSON.stringify({ status: project.status }),
       });
       return created;
+      });
     } catch (error) {
       throw new AppError("CONFLICT", 409, error instanceof Error ? error.message : "PROJECT_CREATE_FAILED");
     }
@@ -30,6 +32,7 @@ export class BusinessService {
 
   createConfiguration(configuration: ProjectConfiguration, actorMemberId: string): ProjectConfiguration {
     try {
+      return this.repository.transaction(() => {
       const created = this.repository.createConfiguration(configuration);
       writeAudit(this.repository, {
         organizationId: this.requireProjectOrganization(configuration.projectId),
@@ -40,6 +43,7 @@ export class BusinessService {
         metadataJson: JSON.stringify({ version: configuration.version, engineVersion: configuration.engineVersion }),
       });
       return created;
+      });
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE")) {
         throw new AppError("CONFLICT", 409, "CONFIGURATION_VERSION_CONFLICT");
@@ -52,7 +56,7 @@ export class BusinessService {
     const project = this.repository.getProject(contract.projectId);
     if (!project) throw new AppError("NOT_FOUND", 404, "BUSINESS_PROJECT_NOT_FOUND");
     try {
-      const created = this.repository.createContract(contract);
+      const created = this.repository.transaction(() => { const value = this.repository.createContract(contract);
       writeAudit(this.repository, {
         organizationId: project.organizationId,
         actorMemberId,
@@ -60,7 +64,7 @@ export class BusinessService {
         resourceType: "contract",
         resourceId: contract.id,
         metadataJson: JSON.stringify({ number: contract.number, totalCents: contract.totalCents }),
-      });
+      }); return value; });
       return created;
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE")) {
