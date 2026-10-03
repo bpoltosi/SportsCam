@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SQLiteProjectRepository } from "../packages/persistence/src/sqlite.js";
+import { openDatabase, SQLiteProjectRepository } from "../packages/persistence/src/index.js";
 
 describe("SQLiteProjectRepository", () => {
   it("persists projects across repository instances", async () => {
@@ -16,12 +16,25 @@ describe("SQLiteProjectRepository", () => {
       updatedAt: new Date().toISOString(),
     };
 
-    const first = new SQLiteProjectRepository(path);
+    const firstDb = openDatabase(path);
+    const first = new SQLiteProjectRepository(firstDb);
     await first.create(project);
-    first.close();
+    firstDb.close();
 
-    const second = new SQLiteProjectRepository(path);
+    const secondDb = openDatabase(path);
+    const second = new SQLiteProjectRepository(secondDb);
     await expect(second.get("p1")).resolves.toEqual(project);
-    second.close();
+    secondDb.close();
+  });
+
+  it("applies migrations idempotently", () => {
+    const dir = mkdtempSync(join(tmpdir(), "sportscam-migrations-"));
+    const path = join(dir, "test.db");
+    const db = openDatabase(path);
+    openDatabase(path).close();
+    const versions = db.prepare("SELECT version FROM schema_migrations ORDER BY version").all()
+      .map(row => String(row.version));
+    expect(versions).toEqual(["001", "002", "003"]);
+    db.close();
   });
 });
