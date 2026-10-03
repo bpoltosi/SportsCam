@@ -92,12 +92,17 @@ app.post("/v1/auth/register", async (request, reply) => {
   const parsed=RegisterSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_REGISTRATION",issues:parsed.error.issues});
   const timestamp=now(), organization={id:crypto.randomUUID(),name:parsed.data.organizationName,slug:parsed.data.slug,createdAt:timestamp,updatedAt:timestamp};
   try {
+    db.exec("BEGIN");
     business.createOrganization(organization);
     const member=business.createMember({id:crypto.randomUUID(),organizationId:organization.id,email:parsed.data.email,displayName:parsed.data.displayName,role:"owner",createdAt:timestamp,updatedAt:timestamp});
     auth.setPassword(member.id,parsed.data.password);
     const session=auth.createSession(member.id);
+    db.exec("COMMIT");
     return reply.code(201).send({organization,member,session});
-  } catch(e) { return reply.code(409).send({error:"REGISTRATION_FAILED"}); }
+  } catch(e) {
+    try { db.exec("ROLLBACK"); } catch {}
+    return reply.code(409).send({error:"REGISTRATION_FAILED"});
+  }
 });
 app.post("/v1/auth/login", async (request, reply) => {
   const parsed=LoginSchema.safeParse(request.body); if(!parsed.success) return reply.code(400).send({error:"INVALID_LOGIN"});
