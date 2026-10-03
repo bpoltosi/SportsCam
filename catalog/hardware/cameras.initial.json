@@ -1,0 +1,229 @@
+{
+  "catalog_version": "0.1.0",
+  "generated_at": "2026-10-03",
+  "source_policy": {
+    "primary_source": "aliexpress",
+    "price_mode": "static_reference",
+    "dynamic_pricing": false,
+    "compatibility_rule": "only explicit/reliably documented capabilities are accepted"
+  },
+  "items": [
+    {
+      "id": "CAM-WIFI-5MP30-001",
+      "category": "camera",
+      "model": "Wifi 3MP 15fps / 5MP 30FPS Wireless IP Camera Module",
+      "manufacturer_or_brand": "Shenzhen Anseer Security Equipment Co.,Ltd.",
+      "variant": "5MP30",
+      "capabilities": {
+        "resolution": {"width": 2592, "height": 1944, "max_megapixels": 5},
+        "fps": {"max": 30},
+        "transmission": ["wifi", "ip"],
+        "protocols": ["rtsp", "rtmp", "onvif"],
+        "compression": ["h264", "h265"],
+        "power": ["external"],
+        "storage": ["micro_sd"]
+      },
+      "compatibility": {
+        "camera_base_v1": true,
+        "transport": "wireless_or_network",
+        "minimum_1080p30": true,
+        "poe": false
+      },
+      "reference_price": {
+        "value": 31.93,
+        "currency": "USD",
+        "reference_date": "2026-09-06",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005008345891510.html"
+      },
+      "evidence": {
+        "source_url": "https://uk.pricearchive.org/aliexpress.com/item/1005008345891510",
+        "notes": "Listing explicitly states 5MP 30FPS, wireless IP, RTSP/RTMP and ONVIF. Exact 1080p stream mode should be confirmed on the selected variant before procurement."
+      }
+    },
+    {
+      "id": "CAM-WIFI-1080-002",
+      "category": "camera",
+      "model": "5MP/2MP 1080P Wireless IP Camera Module Mini WiFi",
+      "manufacturer_or_brand": "Shenzhen Anseer Security Equipment Co.,Ltd.",
+      "variant": "1080P",
+      "capabilities": {
+        "resolution": {"width": 1920, "height": 1080, "max_megapixels": 5},
+        "fps": {"max": null},
+        "transmission": ["wifi", "ip"],
+        "protocols": ["onvif"],
+        "power": ["external"],
+        "storage": ["micro_sd"]
+      },
+      "compatibility": {
+        "camera_base_v1": "pending_fps_validation",
+        "transport": "wireless_or_network",
+        "minimum_1080p30": "pending",
+        "poe": false
+      },
+      "reference_price": {
+        "value": 28.67,
+        "currency": "USD",
+        "reference_date": "2026-09-10",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005007637179240.html"
+      },
+      "evidence": {
+        "source_url": "https://vi.pricearchive.org/aliexpress.com/item/1005007637179240",
+        "notes": "Explicitly identified as 1080P, wireless IP and ONVIF. FPS was not explicit in the retrieved evidence, so it is cataloged as pending validation rather than approved for CAMERA_BASE_V1."
+      }
+    },
+    {
+      "id": "CAM-POE-1080-60-001",
+      "category": "camera",
+      "model": "1080P 60FPS IP Camera Module IMX307 CMOS POE",
+      "manufacturer_or_brand": "Shop1105437888",
+      "variant": "1080P60",
+      "capabilities": {
+        "resolution": {"width": 1920, "height": 1080, "max_megapixels": 2},
+        "fps": {"max": 60},
+        "transmission": ["ethernet", "ip"],
+        "protocols": ["rtsp", "onvif"],
+        "compression": ["h265"],
+        "power": ["poe"],
+        "sensor": "Sony IMX307",
+        "lens_mount": "M12"
+      },
+      "compatibility": {
+        "camera_base_v1": true,
+        "transport": "network",
+        "minimum_1080p30": true,
+        "poe": true
+      },
+      "reference_price": {
+        "value": 49.70,
+        "currency": "USD",
+        "reference_date": "2026-09-01",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005012059226565.html"
+      },
+      "evidence": {
+        "source_url": "https://da.pricearchive.org/aliexpress.com/item/1005012059226565",
+        "notes": "Listing title explicitly states 1080P 60FPS, POE, ONVIF and RTSP."
+      }
+    },
+    {
+      "id": "CAM-POE-1080-60-ZOOM-001",
+      "category": "camera",
+      "model": "20X Zoom IP Camera 1080P 60FPS IMX307",
+      "manufacturer_or_brand": "WGWK",
+      "variant": "1080P60-20X",
+      "capabilities": {
+        "resolution": {"width": 1920, "height": 1080, "max_megapixels": 2},
+        "fps": {"max": 60},
+        "transmission": ["ethernet", "ip"],
+        "protocols": ["rtsp", "onvif"],
+        "compression": ["h265"],
+        "power": ["poe"],
+        "sensor": "Sony IMX307",
+        "lens": "5-50mm varifocal",
+        "optical_zoom": "20x"
+      },
+      "compatibility": {
+        "camera_base_v1": true,
+        "transport": "network",
+        "minimum_1080p30": true,
+        "poe": true
+      },
+      "reference_price": {
+        "value": 78.67,
+        "currency": "USD",
+        "reference_date": "2026-09-20",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005010328700985.html"
+      },
+      "evidence": {
+        "source_url": "https://de.pricearchive.org/aliexpress.com/item/1005010328700985",
+        "notes": "Listing explicitly states 1080P 60FPS, RTSP, ONVIF, H.265 and POE."
+      }
+    },
+    {
+      "id": "CAM-POE-1080-60-FISHEYE-001",
+      "category": "camera",
+      "model": "WGWK 1080P 60FPS IP Camera 1.8mm 153-degree fisheye",
+      "manufacturer_or_brand": "WGWK",
+      "variant": "1080P60-FISHEYE",
+      "capabilities": {
+        "resolution": {"width": 1920, "height": 1080, "max_megapixels": 2},
+        "fps": {"max": 60},
+        "transmission": ["ethernet", "ip"],
+        "protocols": ["rtsp", "onvif"],
+        "power": ["poe"],
+        "lens": "1.8mm fisheye",
+        "field_of_view": "153 degrees"
+      },
+      "compatibility": {
+        "camera_base_v1": true,
+        "transport": "network",
+        "minimum_1080p30": true,
+        "poe": true
+      },
+      "reference_price": {
+        "value": 73.72,
+        "currency": "USD",
+        "reference_date": "2026-09-11",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005008943441830.html"
+      },
+      "evidence": {
+        "source_url": "https://www.pricearchive.org/aliexpress.com/item/1005008943441830",
+        "notes": "Listing title explicitly states 1080P 60FPS, ONVIF, RTSP and POE."
+      }
+    },
+    {
+      "id": "CAM-POE-4K-30-001",
+      "category": "camera",
+      "model": "HD Network Camera Module 12MP 30FPS POE IMX577",
+      "manufacturer_or_brand": "Unknown / listing seller",
+      "variant": "4K30",
+      "capabilities": {
+        "resolution": {"width": 3840, "height": 2160, "max_megapixels": 12},
+        "fps": {"max": 30},
+        "transmission": ["ethernet", "ip"],
+        "protocols": ["rtsp", "rtmp", "onvif"],
+        "power": ["poe"],
+        "sensor": "Sony IMX577"
+      },
+      "compatibility": {
+        "camera_base_v1": true,
+        "transport": "network",
+        "minimum_1080p30": true,
+        "poe": true
+      },
+      "reference_price": {
+        "value": 203.52,
+        "currency": "USD",
+        "reference_date": "2026-09-2026",
+        "source": "aliexpress"
+      },
+      "purchase_reference": {
+        "source": "aliexpress",
+        "url": "https://www.aliexpress.com/item/1005012860422184.html"
+      },
+      "evidence": {
+        "source_url": "https://ms.pricearchive.org/aliexpress.com/item/1005012860422184",
+        "notes": "Listing explicitly states 12MP, 30FPS, POE, IP, RTSP, RTMP and ONVIF. Price source shows the reference price at retrieval."
+      }
+    }
+  ]
+}
