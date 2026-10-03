@@ -25,7 +25,7 @@ export class MediaRepository {
     return r ? { id:String(r.id), organizationId:String(r.organization_id), name:String(r.name), status:r.status as DeviceStatus, agentVersion:String(r.agent_version) } : null;
   }
 
-  heartbeat(deviceId: string, input: { status: DeviceStatus; agentVersion: string; metrics?: Record<string, unknown>; cameraStates?: Record<string, unknown> }) {
+  heartbeat(deviceId: string, input: { status: DeviceStatus; agentVersion: string; metrics?: Record<string, unknown>; cameraStates?: Array<Record<string, unknown>> }) {
     const now = new Date().toISOString();
     this.db.prepare("UPDATE devices SET status=?,agent_version=?,last_heartbeat_at=?,updated_at=? WHERE id=?").run(input.status,input.agentVersion,now,now,deviceId);
     return this.db.prepare("SELECT id,organization_id,name,status,agent_version,last_heartbeat_at FROM devices WHERE id=?").get(deviceId);
