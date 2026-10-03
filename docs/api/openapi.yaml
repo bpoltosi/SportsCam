@@ -199,6 +199,66 @@ paths:
                 checksum: {type: string, nullable: true}
       responses:
         '201': {description: Segment created}
+  /v1/edge/devices/{deviceId}/uploads:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaUploadCreate'
+      responses:
+        '201': {description: Upload session created}
+        '409': {description: Idempotency conflict}
+  /v1/edge/uploads/{uploadId}:
+    get:
+      parameters:
+        - in: path
+          name: uploadId
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Upload session}
+        '404': {description: Not found}
+    post:
+      parameters:
+        - in: path
+          name: uploadId
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+      responses:
+        '200': {description: Part accepted}
+        '409': {description: Invalid upload state}
+  /v1/edge/uploads/{uploadId}/complete:
+    post:
+      parameters:
+        - in: path
+          name: uploadId
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Upload completed}
+        '409': {description: Checksum or state mismatch}
+  /v1/edge/uploads/{uploadId}/abort:
+    post:
+      parameters:
+        - in: path
+          name: uploadId
+          required: true
+          schema: {type: string}
+      responses:
+        '204': {description: Upload aborted}
   /v1/projects/{projectId}/events:
     post:
       parameters:
@@ -288,10 +348,10 @@ components:
         diagnostics: {type: array, items: {type: object}}
     DeviceRegistration:
       type: object
-      required: [deviceId,organizationId,agentVersion]
+      required: [id,name,agentVersion]
       properties:
-        deviceId: {type: string}
-        organizationId: {type: string}
+        id: {type: string}
+        name: {type: string}
         agentVersion: {type: string}
         hardwareProfile: {type: string}
     DeviceHeartbeat:
@@ -304,6 +364,32 @@ components:
         agentVersion: {type: string}
         metrics: {type: object}
         cameraStates: {type: array, items: {type: object}}
+    MediaUploadCreate:
+      type: object
+      required: [objectKey,contentType,expectedSize,checksum]
+      properties:
+        objectKey: {type: string}
+        contentType: {type: string}
+        expectedSize: {type: integer, minimum: 0}
+        checksum: {type: string, pattern: '^[a-fA-F0-9]{64}
+      type: object
+      required: [timestampMs,type,source]
+      properties:
+        recordingId: {type: string}
+        timestampMs: {type: integer, minimum: 0}
+        type: {type: string}
+        source: {type: string, enum: [manual,sensor,integration,algorithm,ai]}
+        metadata: {type: object}
+    ClipCreate:
+      type: object
+      required: [eventId,preSeconds,postSeconds]
+      properties:
+        eventId: {type: string}
+        preSeconds: {type: number, minimum: 0}
+        postSeconds: {type: number, minimum: 0}
+}
+        partSize: {type: integer, minimum: 1}
+        expiresAt: {type: string, format: date-time}
     EventCreate:
       type: object
       required: [timestampMs,type,source]
