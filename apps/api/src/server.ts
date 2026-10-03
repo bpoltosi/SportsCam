@@ -179,18 +179,52 @@ app.post("/v1/business-projects/:projectId/contracts", async (request, reply) =>
   if(!parsed.success) return reply.code(400).send({error:"INVALID_CONTRACT",issues:parsed.error.issues});
   const c={id:crypto.randomUUID(),projectId,...parsed.data,status:"draft" as const,validUntil:parsed.data.validUntil??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createContract(c, request.user!.memberId));
 });
+app.patch("/v1/business-projects/:projectId/status", async (request, reply) => {
+  assertRole(request.user, ["owner","admin","manager"]);
+  const { projectId } = z.object({ projectId: z.string().min(1) }).parse(request.params);
+  const parsed = z.object({ status: z.enum(["draft","quoted","contracted","installing","operational","archived"]) }).safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error: "INVALID_PROJECT_STATUS", issues: parsed.error.issues });
+  const project = business.getProject(projectId);
+  if (!project) return reply.code(404).send({ error: "BUSINESS_PROJECT_NOT_FOUND" });
+  return businessService.updateProjectStatus(projectId, parsed.data.status, request.user!.memberId);
+});
+
 app.get("/v1/business-projects/:projectId/contracts", async request => business.listContracts(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/installations", async (request, reply) => {
   assertRole(request.user, ["owner","admin","manager","operator"]); const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=InstallationSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_INSTALLATION",issues:parsed.error.issues});
   const i={id:crypto.randomUUID(),projectId,...parsed.data,status:parsed.data.status,scheduledAt:parsed.data.scheduledAt??null,completedAt:null,notes:parsed.data.notes??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createInstallation(i, request.user!.memberId));
 });
+app.patch("/v1/contracts/:contractId/status", async (request, reply) => {
+  assertRole(request.user, ["owner","admin","manager"]);
+  const { contractId } = z.object({ contractId: z.string().min(1) }).parse(request.params);
+  const parsed = z.object({ status: z.enum(["draft","sent","accepted","active","cancelled","expired"]) }).safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error: "INVALID_CONTRACT_STATUS", issues: parsed.error.issues });
+  const contract = business.getContract(contractId);
+  if (!contract) return reply.code(404).send({ error: "CONTRACT_NOT_FOUND" });
+  const project = business.getProject(contract.projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
+  return businessService.updateContractStatus(contractId, parsed.data.status, request.user!.memberId);
+});
+
 app.get("/v1/business-projects/:projectId/installations", async request => business.listInstallations(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/hardware", async (request, reply) => {
   if (!requireRole(request, reply, ["owner","admin","manager","operator"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=HardwareSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_INSTALLED_HARDWARE",issues:parsed.error.issues});
   const h={id:crypto.randomUUID(),projectId,...parsed.data,quantity:parsed.data.quantity,serialNumber:parsed.data.serialNumber??null,installationId:parsed.data.installationId??null,status:"planned" as const,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createHardware(h));
 });
+app.patch("/v1/installations/:installationId/status", async (request, reply) => {
+  assertRole(request.user, ["owner","admin","manager","operator"]);
+  const { installationId } = z.object({ installationId: z.string().min(1) }).parse(request.params);
+  const parsed = z.object({ status: z.enum(["planned","scheduled","in_progress","installed","blocked","cancelled"]) }).safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error: "INVALID_INSTALLATION_STATUS", issues: parsed.error.issues });
+  const installation = business.getInstallation(installationId);
+  if (!installation) return reply.code(404).send({ error: "INSTALLATION_NOT_FOUND" });
+  const project = business.getProject(installation.projectId);
+  if (!project || project.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
+  return businessService.updateInstallationStatus(installationId, parsed.data.status, request.user!.memberId);
+});
+
 app.get("/v1/business-projects/:projectId/hardware", async request => business.listHardware(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 
