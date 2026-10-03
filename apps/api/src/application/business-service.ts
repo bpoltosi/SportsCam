@@ -77,16 +77,18 @@ export class BusinessService {
   createInstallation(installation: Installation, actorMemberId: string): Installation {
     const project = this.repository.getProject(installation.projectId);
     if (!project) throw new AppError("NOT_FOUND", 404, "BUSINESS_PROJECT_NOT_FOUND");
-    const created = this.repository.createInstallation(installation);
-    writeAudit(this.repository, {
-      organizationId: project.organizationId,
-      actorMemberId,
-      action: "installation.created",
-      resourceType: "installation",
-      resourceId: installation.id,
-      metadataJson: JSON.stringify({ status: installation.status }),
+    return this.repository.transaction(() => {
+      const created = this.repository.createInstallation(installation);
+      writeAudit(this.repository, {
+        organizationId: project.organizationId,
+        actorMemberId,
+        action: "installation.created",
+        resourceType: "installation",
+        resourceId: installation.id,
+        metadataJson: JSON.stringify({ status: installation.status }),
+      });
+      return created;
     });
-    return created;
   }
 
   private requireProjectOrganization(projectId: string): string {
