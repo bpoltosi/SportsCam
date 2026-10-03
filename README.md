@@ -2,8 +2,18 @@
 
 Arquitetura e implementação do SportsCam Engine e seus componentes.
 
-A referência arquitetural canônica está em `docs/architecture/sportscam-engine.md`.
+## Arquitetura
 
+A arquitetura sistêmica está documentada em `docs/architecture/sportscam-system.md`.
+
+Referências canônicas:
+- `docs/architecture/sportscam-system.md` — arquitetura do produto completo.
+- `docs/architecture/sportscam-engine.md` — Engine determinístico, catálogo, regras e BOM.
+- `docs/architecture/python-device-runtime.md` — runtime físico Python e pipeline FFmpeg.
+
+## Roadmap
+
+As próximas etapas estruturais estão registradas nas GitHub Issues **#57–#68**, cobrindo schemas, banco, API, protocolo Edge, vídeo, clips, storage, segurança, observabilidade, CI/CD, protótipo web/painel e fluxo E2E.
 
 ## Python Device Runtime
 
@@ -16,5 +26,3 @@ Exemplo:
 ```bash
 python -m sportscam_runtime.cli replay --input recording.mkv --event 600 --pre 10 --post 10 --output clips/replay.mp4
 ```
-
-Arquitetura detalhada: `docs/architecture/python-device-runtime.md`.
