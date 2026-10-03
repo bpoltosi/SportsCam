@@ -1,6 +1,7 @@
 export interface ProjectRecord {
   id: string;
   name: string;
+  organizationId?: string | null;
   definitionJson: string;
   createdAt: string;
   updatedAt: string;

@@ -34,7 +34,7 @@ describe("SQLiteProjectRepository", () => {
     openDatabase(path).close();
     const versions = db.prepare("SELECT version FROM schema_migrations ORDER BY version").all()
       .map(row => String(row.version));
-    expect(versions).toEqual(["001", "002", "003"]);
+    expect(versions).toEqual(["001", "002", "003", "004"]);
     db.close();
   });
 });
