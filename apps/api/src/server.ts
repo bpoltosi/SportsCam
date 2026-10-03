@@ -198,6 +198,6 @@ app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.
 await app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
 
 
-const shutdown = async () => { db.close(); await app.close(); };
+const shutdown = async () => { await app.close(); db.close(); };
 process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
