@@ -106,10 +106,11 @@ app.post("/v1/auth/login", async (request, reply) => {
   return {session:auth.createSession(member.id),member};
 });
 
-app.get("/v1/projects", async () => projectRepository.list());
+app.get("/v1/projects", async request => projectRepository.list(request.user!.organizationId));
 app.get("/v1/projects/:id", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
-  const project = await projectRepository.get(id);\n  if (project && project.organizationId && project.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
+  const project = await projectRepository.get(id);
+  if (project && project.organizationId && project.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   return project ? project : reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
 });
 app.post("/v1/projects", async (request, reply) => {
@@ -125,11 +126,14 @@ app.put("/v1/projects/:id", async (request, reply) => {
   if (!parsed.success) return reply.code(400).send({ error: "INVALID_PROJECT_DEFINITION", issues: parsed.error.issues });
   const current = await projectRepository.get(id);
   if (!current) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
+  if (current.organizationId && current.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   return projectRepository.update({ ...current, definitionJson: JSON.stringify(parsed.data), updatedAt: now() });
 });
 app.delete("/v1/projects/:id", async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
-  const ownedProject = await projectRepository.get(id);\n  if (!ownedProject) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });\n  if (ownedProject.organizationId && ownedProject.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
+  const ownedProject = await projectRepository.get(id);
+  if (!ownedProject) return reply.code(404).send({ error: "PROJECT_NOT_FOUND" });
+  if (ownedProject.organizationId && ownedProject.organizationId !== request.user!.organizationId) return reply.code(403).send({ error: "FORBIDDEN" });
   await projectRepository.delete(id); return reply.code(204).send();
 });
 app.post("/v1/engine/resolve", async (request, reply) => {
@@ -151,7 +155,7 @@ app.post("/v1/organizations", async (request, reply) => {
   const o={id:crypto.randomUUID(),...parsed.data,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createOrganization(o));
 });
 app.post("/v1/organizations/:orgId/members", async (request, reply) => {
-  try { assertRole(request.user, ["owner","admin"]); } catch (error) { throw error; } const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=MemberSchema.safeParse(request.body);
+  assertRole(request.user, ["owner","admin"]); const {orgId}=z.object({orgId:z.string().min(1)}).parse(request.params); const parsed=MemberSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_MEMBER",issues:parsed.error.issues});
   const m={id:crypto.randomUUID(),organizationId:orgId,...parsed.data,createdAt:now(),updatedAt:now()}; return reply.code(201).send(business.createMember(m));
 });
@@ -171,13 +175,13 @@ app.post("/v1/business-projects/:projectId/configurations", async (request, repl
   const versions=business.listConfigurations(projectId); const result=resolveProject(body.data as ProjectDefinition,await loadCatalog()); const c={id:crypto.randomUUID(),projectId,version:(versions[0]?.version ?? 0)+1,definitionJson:JSON.stringify(body.data),engineVersion:result.engineVersion,resolutionJson:JSON.stringify(result),createdAt:now(),createdBy:request.user!.memberId}; return reply.code(201).send(businessService.createConfiguration(c, request.user!.memberId));
 });
 app.post("/v1/business-projects/:projectId/contracts", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin","manager"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=ContractSchema.safeParse(request.body);
+  assertRole(request.user, ["owner","admin","manager"]); const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=ContractSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_CONTRACT",issues:parsed.error.issues});
   const c={id:crypto.randomUUID(),projectId,...parsed.data,status:"draft" as const,validUntil:parsed.data.validUntil??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createContract(c, request.user!.memberId));
 });
 app.get("/v1/business-projects/:projectId/contracts", async request => business.listContracts(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.post("/v1/business-projects/:projectId/installations", async (request, reply) => {
-  if (!requireRole(request, reply, ["owner","admin","manager","operator"])) return; const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=InstallationSchema.safeParse(request.body);
+  assertRole(request.user, ["owner","admin","manager","operator"]); const {projectId}=z.object({projectId:z.string().min(1)}).parse(request.params); const parsed=InstallationSchema.safeParse(request.body);
   if(!parsed.success) return reply.code(400).send({error:"INVALID_INSTALLATION",issues:parsed.error.issues});
   const i={id:crypto.randomUUID(),projectId,...parsed.data,status:parsed.data.status,scheduledAt:parsed.data.scheduledAt??null,completedAt:null,notes:parsed.data.notes??null,createdAt:now(),updatedAt:now()}; return reply.code(201).send(businessService.createInstallation(i, request.user!.memberId));
 });
@@ -190,7 +194,13 @@ app.post("/v1/business-projects/:projectId/hardware", async (request, reply) => 
 app.get("/v1/business-projects/:projectId/hardware", async request => business.listHardware(z.object({projectId:z.string().min(1)}).parse(request.params).projectId));
 app.get("/v1/organizations/:orgId/audit", async request => business.listAudit(z.object({orgId:z.string().min(1)}).parse(request.params).orgId));
 
-app.setErrorHandler((error, request, reply) => {\n  const normalized = toAppError(error);\n  request.log.error({ err: error, code: normalized.code }, "request failed");\n  return reply.code(normalized.statusCode).send({ error: normalized.code, message: normalized.message, details: normalized.details });\n});\n\nawait app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
+app.setErrorHandler((error, request, reply) => {
+  const normalized = toAppError(error);
+  request.log.error({ err: error, code: normalized.code }, "request failed");
+  return reply.code(normalized.statusCode).send({ error: normalized.code, message: normalized.message, details: normalized.details });
+});
+
+await app.listen({ host:"0.0.0.0", port:Number(process.env.PORT??3000) });
 
 
 const shutdown = async () => { await app.close(); db.close(); };
