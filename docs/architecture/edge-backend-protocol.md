@@ -105,3 +105,14 @@ TLS is mandatory outside local development. Credentials are stored outside sourc
 ## Versioning
 
 Protocol versions use `v1` URL namespace plus payload schema version where needed. Backward-compatible fields may be added; semantic changes require a new version.
+
+
+## Command lifecycle implementation
+
+The backend now persists commands in `device_commands`. Authorized operators enqueue commands, the device pulls them, the server marks delivery, and the device acknowledges success/failure. Commands are therefore durable across API restarts and can be retried by the device according to its local policy.
+
+Administrative credential rotation is also supported. Rotation invalidates the previous device token immediately and returns a new token once; the token must be stored by the edge agent with restrictive filesystem permissions.
+
+## Heartbeat timestamp contract
+
+`sentAt` is mandatory and is an RFC 3339 UTC timestamp. The server's `last_heartbeat_at` is the receipt time and is used for operational liveness; `sentAt` is retained as device-side telemetry context.
