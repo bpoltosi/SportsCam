@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import sqlite3
 import time
 import uuid
@@ -9,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .replay import create_replay_from_segments
+from .store import LocalMediaStore
 
 
 def iso_now() -> str:
@@ -25,6 +25,7 @@ class ClipWorker:
         self.media_root = Path(media_root)
         self.max_attempts = max_attempts
         self.media_root.mkdir(parents=True, exist_ok=True)
+        self.store=LocalMediaStore(self.media_root)
 
     def _connect(self) -> sqlite3.Connection:
         db = sqlite3.connect(self.database, timeout=30, isolation_level=None)
@@ -92,18 +93,19 @@ class ClipWorker:
             first_start = selected[0][1]
             sources = [str(row["local_path"]) for row, _, _ in selected]
             output_key = f"clips/{recording['project_id'] or 'unassigned'}/{clip_id}.mkv"
-            output = self.media_root / output_key
+            work_output = self.media_root / ".work" / f"{clip_id}.mkv"
             start_offset = max(0.0, clip_start - first_start)
             duration = max(0.1, clip_end - clip_start)
-            create_replay_from_segments(sources, str(output), start_offset, duration, stream_copy=True, overwrite=True)
+            create_replay_from_segments(sources, str(work_output), start_offset, duration, stream_copy=True, overwrite=True)
+            stored = self.store.put_file(output_key, work_output, "video/x-matroska")
+            work_output.unlink(missing_ok=True)
 
-            digest = hashlib.sha256(output.read_bytes()).hexdigest()
             now = iso_now()
             media_id = str(uuid.uuid4())
             db.execute(
                 "INSERT INTO media_objects(id,organization_id,object_key,content_type,byte_size,checksum,status,created_at,updated_at) "
                 "VALUES (?,?,?,?,?,?,?,?,?)",
-                (media_id, clip["organization_id"], output_key, "video/x-matroska", output.stat().st_size, digest, "available", now, now),
+                (media_id, clip["organization_id"], stored.key, stored.content_type, stored.byte_size, stored.checksum, "available", now, now),
             )
             db.execute(
                 "UPDATE clips SET status='ready',media_object_id=?,error_code=NULL,error_message=NULL,updated_at=? WHERE id=?",
