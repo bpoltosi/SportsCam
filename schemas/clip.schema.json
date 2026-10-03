@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://sportscam.local/schemas/clip.schema.json",
+  "title":"SportsCam Clip","type":"object","additionalProperties":false,
+  "required":["id","projectId","eventId","status","preSeconds","postSeconds"],
+  "properties":{"id":{"type":"string"},"projectId":{"type":"string"},"eventId":{"type":"string"},"status":{"enum":["queued","processing","ready","failed","deleted"]},"preSeconds":{"type":"number","minimum":0},"postSeconds":{"type":"number","minimum":0},"mediaObjectId":{"type":"string"},"error":{"type":"string"}}
+}
