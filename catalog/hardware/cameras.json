@@ -1,0 +1,317 @@
+{
+  "schema_version": "0.1",
+  "catalog_version": "2026-10-03",
+  "category": "camera",
+  "source_policy": {
+    "primary_marketplace": "aliexpress",
+    "pricing_model": "static_reference",
+    "dynamic_price_tracking": false,
+    "freight_tax_exchange_calculation": false
+  },
+  "compatibility_contract": {
+    "id": "CAMERA_BASE_V1",
+    "min_resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "min_fps": 30,
+    "transport": [
+      "ip_network",
+      "wireless_ip"
+    ],
+    "external_power_required": true,
+    "internal_storage_required": false,
+    "ptz_required": false,
+    "microphone_required": false,
+    "battery_required": false,
+    "local_recording_required": false,
+    "manufacturer_use_case_is_criterion": false
+  },
+  "items": [
+    {
+      "id": "CAM-ALX-SIP-K307G6-WIFI",
+      "category": "camera",
+      "model": "SIP-K307G6-WiFi",
+      "variant": "1080p30_wifi",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "wifi"
+        ],
+        "wifi": {
+          "standard": "802.11b/g/n"
+        },
+        "ethernet": "10/100",
+        "power": [
+          "dc12v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif",
+          "http",
+          "https"
+        ]
+      },
+      "notes": "Módulo IP; Wi-Fi é recurso opcional do conjunto. Sem PTZ obrigatório.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005011830729504",
+        "seller": null,
+        "price": 90.32,
+        "currency": "USD",
+        "reference_date": "2026-09-08",
+        "url": "https://www.aliexpress.com/item/1005011830729504.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "SMTSEC SIP-K307G6 official specification",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-ALX-SIP-K307G6-POE",
+      "category": "camera",
+      "model": "SIP-K307G6",
+      "variant": "1080p30_poe",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_802.3af",
+          "poe_802.3at",
+          "dc12v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif",
+          "http",
+          "https"
+        ]
+      },
+      "notes": "Mesmo módulo técnico com PoE como recurso opcional. A oferta AliExpress encontrada é uma variante com lente motorizada; confirmar SKU/PoE selecionado antes da compra.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005012278907264",
+        "seller": null,
+        "price": 144.96,
+        "currency": "USD",
+        "reference_date": "2026-09-08",
+        "url": "https://www.aliexpress.com/item/1005012278907264.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "SMTSEC SIP-K307G6 official specification",
+        "confidence": "medium"
+      }
+    },
+    {
+      "id": "CAM-ALX-WGWK-1080P60-POE",
+      "category": "camera",
+      "model": "WGWK 1080P 60FPS IP Camera Module IMX307",
+      "variant": "1080p60_poe",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 60
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_48v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif"
+        ]
+      },
+      "notes": "Módulo com sensor Sony IMX307; versão fixa 2.5 mm identificada na oferta.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005009529796898",
+        "seller": null,
+        "price": 81.51,
+        "currency": "USD",
+        "reference_date": "2026-09-06",
+        "url": "https://www.aliexpress.com/item/1005009529796898.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "AliExpress product title/specification",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-ALX-WGWK-1080P60-POE-VF",
+      "category": "camera",
+      "model": "WGWK 1080P 60FPS IP Camera Module IMX307",
+      "variant": "1080p60_poe_varifocal",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 1920,
+          "height": 1080,
+          "megapixels": 2
+        },
+        "fps": {
+          "max": 60
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe_48v"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif"
+        ]
+      },
+      "lens": {
+        "type": "varifocal",
+        "range_mm": "2.8-12"
+      },
+      "notes": "Variante com lente varifocal 2.8–12 mm.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005009551491921",
+        "seller": null,
+        "price": 80.54,
+        "currency": "USD",
+        "reference_date": "2026-05-20",
+        "url": "https://www.aliexpress.com/item/1005009551491921.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "AliExpress product title/specification",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "CAM-ALX-HQCAM-4MP-1440P30",
+      "category": "camera",
+      "model": "HQCAM 4MP Mini IP Bullet Camera Module",
+      "variant": "2k30_network",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 2560,
+          "height": 1440,
+          "megapixels": 4
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "ip_network"
+        ],
+        "power": [
+          "external_dc"
+        ],
+        "protocols": [
+          "rtsp"
+        ]
+      },
+      "notes": "Oferta declara 1440p/1080p a 30 fps. A alimentação/interface exatos devem ser confirmados no SKU antes da compra.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005005954561373",
+        "seller": "HQCAM Official Store",
+        "price": 35.01,
+        "currency": "USD",
+        "reference_date": "2026-08-27",
+        "url": "https://www.aliexpress.com/item/1005005954561373.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "AliExpress listing title",
+        "confidence": "medium"
+      }
+    },
+    {
+      "id": "CAM-ALX-WGWK-4K30-POE",
+      "category": "camera",
+      "model": "WGWK 4K 30FPS POE IP Camera",
+      "variant": "4k30_poe",
+      "compatibility_status": "compatible",
+      "capabilities": {
+        "resolution": {
+          "width": 3840,
+          "height": 2160,
+          "megapixels": 8
+        },
+        "fps": {
+          "max": 30
+        },
+        "transmission": [
+          "ethernet"
+        ],
+        "ethernet": "10/100",
+        "power": [
+          "poe"
+        ],
+        "protocols": [
+          "rtsp",
+          "onvif"
+        ],
+        "lens": {
+          "type": "varifocal",
+          "range_mm": "5-50"
+        }
+      },
+      "notes": "Capacidade superior ao contrato base; deve ser aceito pelo Engine para CAMERA_BASE_V1.",
+      "reference_offer": {
+        "source": "aliexpress",
+        "product_id": "1005011896614967",
+        "seller": null,
+        "price": 88.64,
+        "currency": "USD",
+        "reference_date": "2026-09-04",
+        "url": "https://www.aliexpress.com/item/1005011896614967.html"
+      },
+      "verification": {
+        "product_listing": "AliExpress listing indexed by Pricearchive",
+        "technical_source": "AliExpress listing title",
+        "confidence": "high"
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "variant": "2k60",
+      "status": "not_verified",
+      "reason": "Não encontrei nesta rodada uma oferta AliExpress com resolução 2560x1440 ou equivalente e 60 fps, simultaneamente confirmados com RTSP/ONVIF."
+    },
+    {
+      "variant": "1080p30_wifi",
+      "status": "verified_with_caveat",
+      "reason": "A base técnica SMTSEC confirma 1080p30, RTSP e Wi-Fi opcional; a oferta AliExpress encontrada é listada como SIP-K307G6-WiFi e deve ter o SKU/variante conferido antes da compra."
+    }
+  ]
+}
