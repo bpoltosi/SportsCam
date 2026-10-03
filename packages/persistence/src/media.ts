@@ -10,6 +10,20 @@ const hashToken = (token: string) => createHash("sha256").update(token).digest("
 export class MediaRepository {
   constructor(private readonly db: DatabaseSync) {}
 
+  createCamera(input:{id:string;organizationId:string;deviceId?:string|null;projectId?:string|null;name:string;catalogHardwareId?:string|null;status:DeviceStatus;configuration:Record<string,unknown>}) {
+    const now=new Date().toISOString();
+    this.db.prepare("INSERT INTO cameras(id,organization_id,device_id,project_id,name,catalog_hardware_id,status,configuration_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+      .run(input.id,input.organizationId,input.deviceId??null,input.projectId??null,input.name,input.catalogHardwareId??null,input.status,JSON.stringify(input.configuration),now,now);
+    return this.getCamera(input.id);
+  }
+
+  getCamera(id:string) { return this.db.prepare("SELECT * FROM cameras WHERE id=?").get(id); }
+  listCameras(orgId:string, projectId?:string|null) {
+    return projectId
+      ? this.db.prepare("SELECT * FROM cameras WHERE organization_id=? AND project_id=? ORDER BY created_at").all(orgId,projectId)
+      : this.db.prepare("SELECT * FROM cameras WHERE organization_id=? ORDER BY created_at").all(orgId);
+  }
+
   registerDevice(input: { id: string; organizationId: string; name: string; agentVersion: string; hardwareProfile?: string | null }) {
     const token = randomBytes(32).toString("base64url");
     const now = new Date().toISOString();
