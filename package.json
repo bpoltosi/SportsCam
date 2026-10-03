@@ -9,8 +9,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm test",
-    "engine": "tsx packages/engine/src/cli.ts"
+    "check": "npm run typecheck && npm run check:catalog && npm test",
+    "engine": "tsx packages/engine/src/cli.ts",
+    "check:catalog": "tsx packages/engine/src/catalog-check.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
