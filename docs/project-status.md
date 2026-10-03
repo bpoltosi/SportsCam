@@ -54,3 +54,21 @@ Não há bloqueio para continuar a implementação local/estrutural.
 As decisões de infraestrutura ainda abertas (object storage, provedor de auth, mecanismo de jobs e deployment final) podem ser isoladas por interfaces e não devem bloquear o desenvolvimento do domínio.
 
 O principal bloqueio para declarar o MVP operacional é a integração E2E com um fluxo de mídia persistente e um dispositivo/simulador real.
+
+
+## Media/Edge implementation update — 2026-10-03
+
+Implemented in repository:
+- persistent media/edge repository for devices, recordings, segments, events, clips and processing jobs;
+- one-time device credential issuance with SHA-256-at-rest credential storage;
+- device-authenticated heartbeat path separated from human session authentication;
+- recording and segment lifecycle API;
+- event ingestion and tenant/project ownership checks;
+- clip enqueue API that creates a persistent processing job atomically;
+- Python persistent clip worker with retry/dead-letter behavior;
+- clip generation spanning multiple recording segments using FFmpeg concat + stream copy;
+- local media-object registration with SHA-256 checksum;
+- JSON Schema compilation validation in the Node CI check;
+- persistence tests for device authentication and atomic clip enqueue.
+
+The remaining production boundary is object-storage/resumable-upload integration and a real/simulated edge agent that continuously uploads segment metadata/files. The clip worker intentionally uses a local filesystem media root so the storage provider can be replaced without changing the processing contract.
