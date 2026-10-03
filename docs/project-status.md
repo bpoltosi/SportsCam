@@ -72,3 +72,12 @@ Implemented in repository:
 - persistence tests for device authentication and atomic clip enqueue.
 
 The remaining production boundary is object-storage/resumable-upload integration and a real/simulated edge agent that continuously uploads segment metadata/files. The clip worker intentionally uses a local filesystem media root so the storage provider can be replaced without changing the processing contract.
+
+
+### Latest runtime hardening
+- durable device command queue + ACK lifecycle;
+- device credential rotation;
+- project camera persistence/API;
+- standardized runtime Device capability contract;
+- deterministic DeviceHealthMonitor;
+- ONVIF remains the next hardware-protocol boundary: the existing adapter is intentionally conservative and the full SOAP/WS-Discovery implementation could not be safely applied through the repository tool in this execution environment.
