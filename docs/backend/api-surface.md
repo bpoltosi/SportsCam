@@ -23,3 +23,14 @@
 - GET /v1/organizations/:orgId/audit
 
 The current API is an MVP contract. Before public release, authorization must derive the organization from the authenticated session and enforce resource ownership on every route.
+
+
+## Lifecycle mutations
+
+Business resources now expose explicit state transitions rather than arbitrary status replacement:
+
+- PATCH /v1/business-projects/:projectId/status
+- PATCH /v1/contracts/:contractId/status
+- PATCH /v1/installations/:installationId/status
+
+Transitions are validated by the domain state machine and mutation events are persisted in the organization audit log. Invalid transitions return a conflict response.
