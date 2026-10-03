@@ -36,3 +36,19 @@ python -m sportscam_runtime.cli devices
 python -m sportscam_runtime.cli clip --input recordings/camera.mkv --start 00:10:00 --duration 15 --output clips/replay.mp4
 python -m sportscam_runtime.cli segments --input recordings/camera.mkv --segment 60 --output recordings/segments
 ```
+
+## Persistent clip worker
+
+O processamento assíncrono de clips usa SQLite como fila durável e FFmpeg como hot path:
+
+```bash
+python -m sportscam_runtime.media.clip_worker --database sportscam.db --media-root media
+```
+
+Para executar apenas um job:
+
+```bash
+python -m sportscam_runtime.media.clip_worker --database sportscam.db --media-root media --once
+```
+
+O worker faz claim atômico, suporta retry com backoff, dead-letter após tentativas máximas, cria clips atravessando múltiplos segmentos e registra o media_object com checksum SHA-256.
