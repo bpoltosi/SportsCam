@@ -1,33 +1,55 @@
 # SportsCam
 
-Arquitetura e implementação do SportsCam Engine e seus componentes.
+Plataforma modular para captura de vídeo esportivo, processamento de mídia e geração de **clips/replays**, com um Engine determinístico, backend, runtime Python para dispositivos e site público.
 
-## Arquitetura
+## Visão geral
 
-A arquitetura sistêmica está documentada em `docs/architecture/sportscam-system.md`.
+O projeto separa a lógica de configuração do produto, os serviços de negócio, a integração com dispositivos físicos e o processamento de vídeo. A arquitetura busca permitir que diferentes câmeras e módulos de hardware sejam descritos por catálogo e conectados por contratos explícitos.
 
-Referências canônicas:
-- `docs/architecture/sportscam-system.md` — arquitetura do produto completo.
-- `docs/architecture/sportscam-engine.md` — Engine determinístico, catálogo, regras e BOM.
-- `docs/architecture/python-device-runtime.md` — runtime físico Python e pipeline FFmpeg.
+## Componentes
 
-## Roadmap
+- **Engine TypeScript (`packages/engine/`)** — resolução determinística de projetos, módulos, regras, compatibilidade e catálogo de hardware.
+- **Domínio (`packages/domain/`)** — entidades de negócio e transições de estado.
+- **Persistência (`packages/persistence/`)** — SQLite, migrations, projetos, instalações, mídia e resoluções.
+- **Autenticação (`packages/auth/`)** — autenticação e sessões.
+- **API (`apps/api/`)** — servidor Fastify, autorização, serviços de negócio e endpoints.
+- **Runtime Python (`runtime/python/`)** — adapters para RTSP, ONVIF, HTTP, NVR, USB/UVC, serial e GPIO; simulação; gravação e processamento de clips via FFmpeg.
+- **Catálogos e schemas (`catalog/`, `schemas/`)** — definições versionadas de câmeras, módulos, regras e contratos JSON.
+- **Site (`apps/web/`)** — site público estático.
+- **Documentação (`docs/`)** — arquitetura, API, segurança, UX, operação e status.
 
-As próximas etapas estruturais estão registradas nas GitHub Issues **#57–#68**, cobrindo schemas, banco, API, protocolo Edge, vídeo, clips, storage, segurança, observabilidade, CI/CD, protótipo web/painel e fluxo E2E.
+## Tecnologias
 
-## Python Device Runtime
+TypeScript, Node.js, Fastify, Zod, SQLite, Python, FFmpeg, OpenCV (em adapters que necessitam de câmera), JSON Schema e GitHub Actions.
 
-A execução física fica em `runtime/python`, separada do Engine TypeScript.
+## Desenvolvimento
 
-Suporta adapters para RTSP, ONVIF, HTTP, USB/UVC, Serial, GPIO e NVR, além de um pipeline FFmpeg para gravação em segmentos e criação de clipes/replays.
-
-Exemplo:
+Requer Node.js e npm para o Engine/API:
 
 ```bash
-python -m sportscam_runtime.cli replay --input recording.mkv --event 600 --pre 10 --post 10 --output clips/replay.mp4
+npm install
+npm run check
+npm run dev
 ```
 
+Comandos definidos no `package.json`:
+- `npm run build` — compilação TypeScript.
+- `npm run typecheck` — verificação de tipos.
+- `npm test` — testes automatizados.
+- `npm run check` — typecheck, validação de catálogos/schemas e testes.
+- `npm run engine` — CLI do Engine.
 
-## SportsCam Web
+O runtime Python possui configuração e instruções próprias em [runtime/python/README.md](runtime/python/README.md). FFmpeg é uma dependência de sistema para processamento de vídeo.
 
-O site público/comercial está em `apps/web` e é publicado por GitHub Pages via `.github/workflows/web-pages.yml`. A pesquisa e as decisões de UX estão em `docs/research/public-site-design-research.md` e `docs/ux/public-site.md`.
+## Arquitetura e estado
+
+- [Arquitetura sistêmica](docs/architecture/sportscam-system.md)
+- [Engine](docs/architecture/sportscam-engine.md)
+- [Runtime de dispositivos](docs/architecture/python-device-runtime.md)
+- [Pipeline de mídia](docs/architecture/media-pipeline.md)
+- [Status do projeto](docs/project-status.md)
+- [Contrato OpenAPI](docs/api/openapi.yaml)
+
+## Status
+
+Projeto em desenvolvimento ativo. O status documentado registra componentes implementados e pendências; não assuma que toda a cadeia está validada em hardware real ou pronta para produção sem executar os testes e verificações do ambiente.
